@@ -1,9 +1,13 @@
+import java.util.ArrayList;
+import java.util.List;
+
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
+import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
@@ -12,6 +16,7 @@ import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
@@ -98,7 +103,7 @@ public class IRLVITest {
 		
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		OOMDPPlanner planner = new ValueIteration(domain, rf, tf, 0.9, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(domain, rf, tf, 0.9, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
 		planner.planFromState(initialState);
@@ -108,9 +113,18 @@ public class IRLVITest {
 		
 		//run a sample of the computed policy and write its results to the file "VIResult.episode" in the directory outputPath
 		//a '.episode' extension is automatically added by the writeToFileMethod
-		EpisodeAnalysis episodeAnalysis = p.evaluateBehavior(initialState, rf, tf,1000);
-		episodeAnalysis.writeToFile(outputPath + "VIResult", sp);
+		List<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
+		for (int i =0; i < 10; ++i) {
+			EpisodeAnalysis episode = p.evaluateBehavior(initialState, rf, tf,1000);
+			episodes.add(episode);
+			episode.writeToFile(outputPath + "ExpertDemo" + i, sp);
+			
+		}
 		
+		FeatureMapping featureMapping = FeatureMapping.CreateFeatureMapping(IRLGridWorld.getPropositionalFunctions(this.domain));
+		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, rf, tf, 1000);
+		resultEpisode.writeToFile(outputPath + "Result", sp);
 	}
 	
 	
@@ -144,4 +158,6 @@ public class IRLVITest {
 		
 
 	}
+	
+	
 }

@@ -30,13 +30,13 @@ public class IRLGridWorld extends GridWorldDomain{
 	public static final String							ATTSTEPS = "agentstepsattribute";
 	public static final int								MIN_REWARD = 1;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 128;
-	public static final int								WIDTH = 128;
+	public static final int								HEIGHT = 32;
+	public static final int								WIDTH = 32;
 	
-	public static final int								MCELL_HEIGHT = 8;
-	public static final int								MCELL_WIDTH = 8;
+	public static final int								MCELL_HEIGHT = 4;
+	public static final int								MCELL_WIDTH = 4;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
-	public static final int								MCELL_FILLED = 20;
+	public static final int								MCELL_FILLED = 4;
 	
 
 	
@@ -114,6 +114,22 @@ public class IRLGridWorld extends GridWorldDomain{
 		return mrewards;
 	}
 	
+	public static PropositionalFunction[] getPropositionalFunctions(Domain domain) {
+		int numWidth = IRLGridWorld.WIDTH / IRLGridWorld.MCELL_WIDTH;
+		int numHeight = IRLGridWorld.HEIGHT / IRLGridWorld.MCELL_HEIGHT;
+		int count = numWidth * numHeight;
+		PropositionalFunction[] functions = new PropositionalFunction[count];
+		int index = 0;
+		for (int i = 0; i < numWidth; ++i) {
+			int x = i * IRLGridWorld.MCELL_WIDTH;
+			for (int j = 0; j < numHeight; ++j) {
+				int y = j * IRLGridWorld.MCELL_HEIGHT;
+				functions[index] = new InMacroCellPF(domain, x, y, IRLGridWorld.MCELL_WIDTH, IRLGridWorld.MCELL_HEIGHT);
+				index++;
+			}
+		}
+		return functions;
+	}
 	/**
 	 * Propositional function for determining if the agent is
 	 * in a particular Macrocell
@@ -179,5 +195,9 @@ public class IRLGridWorld extends GridWorldDomain{
 			return false;
 		}
 	}
+	
+	
+
+	
 	
 }

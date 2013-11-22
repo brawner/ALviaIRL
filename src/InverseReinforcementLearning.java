@@ -6,16 +6,20 @@ import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
+import burlap.behavior.singleagent.planning.QComputablePlanner;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy;
 import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.oomdp.core.Domain;
+import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 
 
 public class InverseReinforcementLearning {
@@ -30,10 +34,12 @@ public class InverseReinforcementLearning {
 	public static FeatureExpectations generateFeatureExpectations(EpisodeAnalysis episodeAnalysis, FeatureMapping featureMapping, Double gamma) {
 		double[] featureExpectationValues = new double[featureMapping.getFeatureSize()];
 		for (int i = 0; i < episodeAnalysis.stateSequence.size(); ++i) {
-			double[] mappingValues = featureMapping.getMappedStateValue(episodeAnalysis.stateSequence.get(i));
+			PropositionalFunction[] propositionalFunctions = featureMapping.getPropositionalFunctions();
 			for (int j = 0; j < featureExpectationValues.length; ++j) {
-				featureExpectationValues[j] += 
-						Math.pow(gamma, i) * mappingValues[j] ;
+				if (propositionalFunctions[j].isTrue(episodeAnalysis.stateSequence.get(i), new String[]{})) {
+					featureExpectationValues[j] += Math.pow(gamma, i);
+				}
+				
 			}
 		}
 		return new FeatureExpectations(featureExpectationValues);
@@ -51,10 +57,11 @@ public class InverseReinforcementLearning {
 		
 		for (EpisodeAnalysis episodeAnalysis : expertEpisodes) {
 			for (int i = 0; i < episodeAnalysis.stateSequence.size(); ++i) {
-				double[] mappingValues = featureMapping.getMappedStateValue(episodeAnalysis.stateSequence.get(i));
+				PropositionalFunction[] propositionalFunctions = featureMapping.getPropositionalFunctions();
 				for (int j = 0; j < featureExpectationValues.length; ++j) {
-					featureExpectationValues[j] += 
-							Math.pow(gamma, i) * mappingValues[j];
+					if (propositionalFunctions[j].isTrue(episodeAnalysis.stateSequence.get(i), new String[]{})) {
+						featureExpectationValues[j] += Math.pow(gamma, i);
+					}
 				}
 			}
 		}
@@ -81,12 +88,14 @@ public class InverseReinforcementLearning {
 
 			@Override
 			public double reward(State state, GroundedAction a, State sprime) {
-				double[] featureMappingValues = newFeatureMapping.getMappedStateValue(state);
+				PropositionalFunction[] propositionalFunctions = newFeatureMapping.getPropositionalFunctions();
 				double[] featureWeightValues = newFeatureWeights.getWeights();
 				
 				double sumReward = 0;
-				for (int i = 0; i < featureMappingValues.length; ++i) {
-					sumReward += featureMappingValues[i] * featureWeightValues[i];
+				for (int i = 0; i < propositionalFunctions.length; ++i) {
+					if (propositionalFunctions[i].isTrue(state, new String[]{})) {
+						sumReward += featureWeightValues[i];
+					}
 				}
 				return sumReward;
 			}
@@ -126,7 +135,7 @@ public class InverseReinforcementLearning {
 	 * @param maxIterations Maximum number of iterations to iterate
 	 * @return
 	 */
-	public static Policy generatePolicyTilde(Domain domain, DeterministicPlanner planner, FeatureMapping featureMapping, List<EpisodeAnalysis> expertEpisodes, double gamma, double epsilon, int maxIterations) {
+	public static Policy generatePolicyTilde(Domain domain, OOMDPPlanner planner, FeatureMapping featureMapping, List<EpisodeAnalysis> expertEpisodes, double gamma, double epsilon, int maxIterations) {
 		int maximumExpertEpisodeLength = 0;
 		for (EpisodeAnalysis expertEpisode : expertEpisodes) {
 			maximumExpertEpisodeLength = Math.max(maximumExpertEpisodeLength, expertEpisode.numTimeSteps());
@@ -147,7 +156,7 @@ public class InverseReinforcementLearning {
 		}
 		
 		// (1b) Compute u^(0) = u(pi^(0))
-		EpisodeAnalysis episodeAnalysis = policy.evaluateBehavior(initialState, null, maximumExpertEpisodeLength);
+		EpisodeAnalysis episodeAnalysis = policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength);
 		FeatureExpectations featureExpectations = InverseReinforcementLearning.generateFeatureExpectations(episodeAnalysis, featureMapping, gamma);
 		featureExpectationsHistory.add(new FeatureExpectations(featureExpectations));
 		
@@ -166,7 +175,13 @@ public class InverseReinforcementLearning {
 			// (4b) Compute optimal policy for pi^(i) give R
 			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
 			planner.planFromState(initialState);
-			policy = new DDPlannerPolicy(planner);
+			
+			if (planner instanceof DeterministicPlanner) {
+				policy = new DDPlannerPolicy((DeterministicPlanner)planner);
+			}
+			else if (planner instanceof QComputablePlanner) {
+				policy = new GreedyQPolicy((QComputablePlanner)planner);
+			}
 			
 			// (5) Compute u^(i) = u(pi^(i))
 			episodeAnalysis = policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength);
