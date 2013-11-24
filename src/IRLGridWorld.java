@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
@@ -30,8 +32,8 @@ public class IRLGridWorld extends GridWorldDomain{
 	public static final String							ATTSTEPS = "agentstepsattribute";
 	public static final int								MIN_REWARD = 1;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 32;
-	public static final int								WIDTH = 32;
+	public static final int								HEIGHT = 8;
+	public static final int								WIDTH = 8;
 	
 	public static final int								MCELL_HEIGHT = 4;
 	public static final int								MCELL_WIDTH = 4;
@@ -129,6 +131,17 @@ public class IRLGridWorld extends GridWorldDomain{
 			}
 		}
 		return functions;
+	}
+	
+	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions) {
+		Map<String, Double> rewards = new HashMap<String, Double>();
+		Random rando = new Random();
+		for (PropositionalFunction function : functions) {
+			double reward = rando.nextDouble();
+			
+			rewards.put(function.getName(), reward);
+		}
+		return rewards;
 	}
 	/**
 	 * Propositional function for determining if the agent is

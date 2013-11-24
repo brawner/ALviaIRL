@@ -165,7 +165,7 @@ public class InverseReinforcementLearning {
 			FeatureWeights featureWeights = FeatureWeights.solveFeatureWeights(expertExpectations, featureExpectationsHistory);
 
 			// (3) if t^(i) <= epsilon, terminate
-			if (featureWeights.getScore() <= epsilon) {
+			if (featureWeights == null || Math.abs(featureWeights.getScore()) <= epsilon) {
 				return policy;
 			}
 			

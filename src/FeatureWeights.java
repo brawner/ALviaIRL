@@ -100,10 +100,10 @@ public class FeatureWeights {
 		try {
 			optimizer.optimize();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return null;
 		}
 		OptimizationResponse optimizationResponse = optimizer.getOptimizationResponse();
+		
 		double[] solution = optimizationResponse.getSolution();
 		double[] weights = Arrays.copyOfRange(solution, 0, weightsSize);
 		double score = solution[weightsSize];

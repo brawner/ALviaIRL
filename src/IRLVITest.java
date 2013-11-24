@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
@@ -21,6 +22,7 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.explorer.VisualExplorer;
+import burlap.oomdp.singleagent.explorer.VisualExplorerRecorder;
 import burlap.oomdp.visualizer.Visualizer;
 
 public class IRLVITest {
@@ -65,18 +67,20 @@ public class IRLVITest {
 	/**
 	 * launch an interactive visualizer of our domain/task
 	 */
-	public void interactive(){
+	public List<EpisodeAnalysis> interactive(){
 		
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, irlgw.getMap());
-		VisualExplorer exp = new VisualExplorer(domain, v, initialState);
+		VisualExplorerRecorder exp = new VisualExplorerRecorder(domain, v, initialState);
 		
 		exp.addKeyAction("w", IRLGridWorld.ACTIONNORTH);
 		exp.addKeyAction("s", IRLGridWorld.ACTIONSOUTH);
 		exp.addKeyAction("d", IRLGridWorld.ACTIONEAST);
 		exp.addKeyAction("a", IRLGridWorld.ACTIONWEST);
 		
-		exp.initGUI();
-		
+		List<EpisodeAnalysis> recordedEpisodes = new ArrayList<EpisodeAnalysis>();
+		exp.initGUIAndRecord(recordedEpisodes);
+		return recordedEpisodes;
+
 	}
 	
 	
@@ -101,9 +105,13 @@ public class IRLVITest {
 			outputPath = outputPath + "/";
 		}
 		
+		PropositionalFunction[] functions = IRLGridWorld.getPropositionalFunctions(this.domain);
+		FeatureMapping featureMapping = FeatureMapping.CreateFeatureMapping(functions);
+		Map<String, Double> rewards = IRLGridWorld.generateRandomRewards(functions);
+		RewardFunction randomReward = new FeatureMappingRF(functions, rewards);
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		ValueIteration planner = new ValueIteration(domain, rf, tf, 0.9, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(domain, randomReward, tf, 0.9, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
 		planner.planFromState(initialState);
@@ -121,9 +129,47 @@ public class IRLVITest {
 			
 		}
 		
-		FeatureMapping featureMapping = FeatureMapping.CreateFeatureMapping(IRLGridWorld.getPropositionalFunctions(this.domain));
+		
 		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
-		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, rf, tf, 1000);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 1000);
+		resultEpisode.writeToFile(outputPath + "Result", sp);
+	}
+	
+	/**
+	 * This will method will perform VI planning and save a sample of the policy.
+	 * @param outputPath the path to the directory in which the policy sample will be saved
+	 */
+	public void ValueIterationExample(String outputPath, List<EpisodeAnalysis> expertEpisodes){
+		
+		//for consistency make sure the path ends with a '/'
+		if(!outputPath.endsWith("/")){
+			outputPath = outputPath + "/";
+		}
+		
+		PropositionalFunction[] functions = IRLGridWorld.getPropositionalFunctions(this.domain);
+		FeatureMapping featureMapping = FeatureMapping.CreateFeatureMapping(functions);
+		Map<String, Double> rewards = IRLGridWorld.generateRandomRewards(functions);
+		RewardFunction randomReward = new FeatureMappingRF(functions, rewards);
+		
+		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
+		ValueIteration planner = new ValueIteration(domain, randomReward, tf, 0.9, hashingFactory, .01, 100);		
+		
+		//run planner from our initial state
+		planner.planFromState(initialState);
+		
+		//create a Q-greedy policy using the Q-values that the planner computes
+		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
+		
+		//run a sample of the computed policy and write its results to the file "VIResult.episode" in the directory outputPath
+		//a '.episode' extension is automatically added by the writeToFileMethod
+		int index = 0;
+		for (EpisodeAnalysis episode : expertEpisodes) {
+			episode.writeToFile(outputPath + "expert" + index++, sp);
+		}
+		
+		
+		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, expertEpisodes	, 0.9, 0.01, 100);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 1000);
 		resultEpisode.writeToFile(outputPath + "Result", sp);
 	}
 	
@@ -137,9 +183,8 @@ public class IRLVITest {
 		
 		String outputPath = "output"; //directory to record results
 		
-		//tester.interactive(); //uncomment to run the interactive visualizer
 		
-		tester.ValueIterationExample(outputPath); //performs planning and save a policy sample in outputPath
+		tester.ValueIterationExample(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		tester.visualizeEpisode(outputPath); //visualizers the policy sample
 
 	}
