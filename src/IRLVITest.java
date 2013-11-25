@@ -123,20 +123,26 @@ public class IRLVITest {
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < 10; ++i) {
-			EpisodeAnalysis episode = p.evaluateBehavior(initialState, rf, tf,1000);
+			EpisodeAnalysis episode = p.evaluateBehavior(initialState, rf, tf,100);
 			episodes.add(episode);
 			episode.writeToFile(outputPath + "ExpertDemo" + i, sp);
 			
 		}
 		
-		
-		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
+		long start = System.currentTimeMillis();
+		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, episodes	, 0.9, 0.01, 100);
 		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
 		resultEpisode.writeToFile(outputPath + "Result", sp);
+		long end = System.currentTimeMillis();
+		System.out.println("Time to complete: " + (end - start)/1000F);
 		
+		
+		start = System.currentTimeMillis();
 		Policy projectionPolicy = InverseReinforcementLearning.projectionMethod(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
+		end = System.currentTimeMillis();
+		System.out.println("Time to complete projection: " + (end - start)/1000F);
 	}
 	
 	/**
@@ -171,14 +177,21 @@ public class IRLVITest {
 			episode.writeToFile(outputPath + "expert" + index++, sp);
 		}
 		
-		
+		long start = System.currentTimeMillis();
 		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, expertEpisodes	, 0.9, 0.01, 100);
 		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
 		resultEpisode.writeToFile(outputPath + "Result", sp);
+		long end = System.currentTimeMillis();
+		System.out.println("Time to complete: " + (end - start)/1000F);
 		
+		
+		start = System.currentTimeMillis();
 		Policy projectionPolicy = InverseReinforcementLearning.projectionMethod(this.domain, planner, featureMapping, expertEpisodes, 0.9, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
+		end = System.currentTimeMillis();
+		System.out.println("Time to complete projection: " + (end - start)/1000F);
+		
 	}
 	
 	
@@ -191,8 +204,8 @@ public class IRLVITest {
 		
 		String outputPath = "output"; //directory to record results
 		
-		
-		tester.ValueIterationExample(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		tester.ValueIterationExample(outputPath);
+		//tester.ValueIterationExample(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		tester.visualizeEpisode(outputPath); //visualizers the policy sample
 
 	}
