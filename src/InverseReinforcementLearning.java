@@ -193,6 +193,104 @@ public class InverseReinforcementLearning {
 		
 		return policy;
 	}
+	/**
+	 * Implements the "projection method" for calculating a policy-tilde with a
+	 * feature expectation within epsilon of an expert's feature expectation.
+	 * As described in:
+	 * Abbeel, Peter and Ng, Andrew. "Apprenticeship Learning via Inverse Reinforcement Learning"
+	 * 
+	 * Takes in an expert's samples in some domain given some features, and returns a list of
+	 * policies that can be evaluated algorithmically or manually.
+	 * 
+	 * Note: I've stored policy histories AND feature expectation histories
+	 * 
+	 * @param domain
+	 * @param planner
+	 * @param featureMapping
+	 * @param expertEpisodes
+	 * @param gamma
+	 * @param epsilon
+	 * @param maxIterations
+	 * @return
+	 */
+	public static Policy projectionMethod(
+										Domain domain, 
+										DeterministicPlanner planner, 
+										FeatureMapping featureMapping, 
+										List<EpisodeAnalysis> expertEpisodes, 
+										double gamma, double epsilon, int maxIterations) {
+		
+		
+		//Max steps that the apprentice will have to learn
+		int maximumExpertEpisodeLength = 0;
+		for (EpisodeAnalysis expertEpisode : expertEpisodes) {
+			maximumExpertEpisodeLength = Math.max(maximumExpertEpisodeLength, expertEpisode.numTimeSteps());
+		}
+		
+		//Planning objects
+		TerminalFunction terminalFunction = planner.getTF();
+		StateHashFactory stateHashingFactory = planner.getHashingFactory();
+		
+		//(0) set up policy array; exper feature expectation
+		List<Policy> policyHistory = new ArrayList<Policy>();
+		List<FeatureExpectations> featureExpectationsHistory = new ArrayList<FeatureExpectations>();
+		
+		FeatureExpectations expertExpectations = InverseReinforcementLearning.generateExpertFeatureExpectations(expertEpisodes, featureMapping, gamma);
+
+		State initialState = InverseReinforcementLearning.getInitialState(expertEpisodes);
+		if (initialState == null) {
+			return null;
+		}
+		
+		// (1). Randomly generate policy pi^(0)
+		Policy policy = new RandomPolicy(domain);
+		policyHistory.add(policy);
+		
+		// (1b) Set up initial Feature Expectation based on policy
+		EpisodeAnalysis episodeAnalysis = policy.evaluateBehavior(initialState, null, maximumExpertEpisodeLength);
+		FeatureExpectations curFE = InverseReinforcementLearning.generateFeatureExpectations(episodeAnalysis, featureMapping, gamma);
+		featureExpectationsHistory.add(new FeatureExpectations(curFE));
+		FeatureExpectations lastProjFE = null;
+		FeatureExpectations newProjFE = null;
+		
+		for (int i = 0; i < maxIterations; ++i) {
+			// (2) Compute weights and score using projection method
+			//THIS IS THE KEY DIFFERENCE BETWEEN THE MAXIMUM MARGIN METHOD AND THE PROJECTION METHOD
+			//On the first iteration, the projection is just set as the current feature expectation
+			if (lastProjFE == null) { 
+				newProjFE = new FeatureExpectations(curFE);
+			}
+			else {
+				newProjFE = FeatureWeights.projectExpertFE(expertExpectations, curFE, lastProjFE);
+			}
+			FeatureWeights featureWeights = FeatureWeights.getWeightsProjectionMethod(expertExpectations, newProjFE);
+			
+			lastProjFE = newProjFE; //don't forget to set the old projection to the new one!
+
+			// (3) if t^(i) <= epsilon, terminate
+			if (featureWeights.getScore() <= epsilon) {
+				return policy;
+			}
+			
+			// (4a) Calculate R = (w^(i))T * phi 
+			RewardFunction rewardFunction = InverseReinforcementLearning.generateRewardFunction(featureMapping, featureWeights);
+			
+			// (4b) Compute optimal policy for pi^(i) give R
+			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
+			planner.planFromState(initialState);
+			policy = new DDPlannerPolicy(planner);
+			policyHistory.add(policy);
+			
+			// (5) Compute u^(i) = u(pi^(i))
+			episodeAnalysis = policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength);
+			curFE = InverseReinforcementLearning.generateFeatureExpectations(episodeAnalysis, featureMapping, gamma);
+			featureExpectationsHistory.add(new FeatureExpectations(curFE));
+			
+			// (6) i++, go back to (2).
+		}
+		
+		return policy;
+	}
 	
 	
 	

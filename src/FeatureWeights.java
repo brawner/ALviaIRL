@@ -109,4 +109,64 @@ public class FeatureWeights {
 		double score = solution[weightsSize];
 		return new FeatureWeights(weights, score);
 	}
+	
+	/**
+	 * 
+	 * This projects the expert's feature expectation onto a line connecting the previous
+	 * estimate of the optimal feature expectation to the previous projection. It is step 2a
+	 * of the projection method.
+	 * 
+	 * @param expertFE - The Expert's Feature Expectations (or estimate of)
+	 * @param lastFE - The last (i-1)th estimate of the optimal feature expectations
+	 * @param lastProjFE - The last (i-2)th projection of the expert's Feature Expectations
+	 * @return A new projection of the Expert's feature Expectation
+	 */
+	public static FeatureExpectations projectExpertFE(FeatureExpectations expertFE,
+														FeatureExpectations lastFE,
+														FeatureExpectations lastProjFE) {
+
+		//otherwise
+		double[] expertExp = expertFE.getValues();
+		double[] lastExp = lastFE.getValues();
+		double[] lastProjExp = lastProjFE.getValues();
+		double[] newProjExp = new double[lastProjExp.length];
+		
+		for (int i = 0; i < newProjExp.length; i++) {
+			//mu_bar^(i-2) + (mu^(i-1)-mu_bar^(i-2))*
+			//((mu^(i-1)-mu_bar^(i-2))*(mu_E-mu_bar^(i-2)))/
+			//((mu^(i-1)-mu_bar^(i-2))*(mu(i-1)-mu_bar^(i-2)))
+			newProjExp[i] = lastProjExp[i] + (lastExp[i]-lastProjExp[i])*
+								((lastExp[i]-lastProjExp[i])*(expertExp[i]-lastProjExp[i]))/
+								((lastExp[i]-lastProjExp[i])*(lastExp[i]-lastProjExp[i]));
+		}
+		
+		return new FeatureExpectations(newProjExp);
+	}
+	
+	/**
+	 * This takes the Expert's feature expectation and a projection, and calculates the weight
+	 * and score. This is step 2b of the projection method.
+	 * 
+	 * @param expertFE
+	 * @param newProjFE
+	 * @return
+	 */
+	public static FeatureWeights getWeightsProjectionMethod(FeatureExpectations expertFE, FeatureExpectations newProjFE){
+		
+		double[] expertExp = expertFE.getValues();
+		double[] newProjExp = newProjFE.getValues();
+		
+		//set the weight as the expert's feature expecation minus the new projection
+		double[] weights = new double[newProjExp.length];
+		for (int i = 0; i < weights.length; i++) {
+			weights[i] = expertExp[i] - newProjExp[i];
+		}
+		
+		//set the score (t) as the L2 norm of the weight
+		double score = 0;
+		for (double w : weights) score += w*w;
+		score = Math.sqrt(score);
+		
+		return new FeatureWeights(weights, score);
+	}
 }
