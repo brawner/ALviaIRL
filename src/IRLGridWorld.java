@@ -1,6 +1,9 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
@@ -19,7 +22,9 @@ import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
 
-
+// TODO Rename to MacroCell gridworld
+// TODO remove commented code
+// TODO move in InMacroCellPF here
 public class IRLGridWorld extends GridWorldDomain{
 	
 	public static final String							MCELL_INDEX = "mcelli";
@@ -30,13 +35,13 @@ public class IRLGridWorld extends GridWorldDomain{
 	public static final String							ATTSTEPS = "agentstepsattribute";
 	public static final int								MIN_REWARD = 1;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 128;
-	public static final int								WIDTH = 128;
+	public static final int								HEIGHT = 8;
+	public static final int								WIDTH = 8;
 	
-	public static final int								MCELL_HEIGHT = 8;
-	public static final int								MCELL_WIDTH = 8;
+	public static final int								MCELL_HEIGHT = 4;
+	public static final int								MCELL_WIDTH = 4;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
-	public static final int								MCELL_FILLED = 20;
+	public static final int								MCELL_FILLED = 1;
 	
 
 	
@@ -57,16 +62,16 @@ public class IRLGridWorld extends GridWorldDomain{
 		//Macrocell Attributes
 		Attribute mcelli = new Attribute(DOMAIN, MCELL_INDEX, Attribute.AttributeType.DISC);
 		mcelli.setDiscValuesForRange(0, MCELL_COUNT-1, 1);
-		Attribute mcellr = new Attribute(DOMAIN, MCELL_REWARD, Attribute.AttributeType.DISC);
-		mcellr.setDiscValuesForRange(MIN_REWARD, MAX_REWARD, 1);
+		//Attribute mcellr = new Attribute(DOMAIN, MCELL_REWARD, Attribute.AttributeType.DISC);
+		//mcellr.setDiscValuesForRange(MIN_REWARD, MAX_REWARD, 1);
 		
 		//Macrocell object
 		ObjectClass macrocellClass = new ObjectClass(DOMAIN, CLASSMCELL);
 		macrocellClass.addAttribute(mcelli);
-		macrocellClass.addAttribute(mcellr);
+		//macrocellClass.addAttribute(mcellr);
 		
-		PropositionalFunction inMacrocell = new InMacroCell(PFINMCELL, DOMAIN, new String[]{CLASSAGENT,CLASSMCELL});
-		PropositionalFunction inRewardingMacrocell = new InRewardingMacroCell(PFINREWARDMCELL, DOMAIN, new String[]{CLASSAGENT,CLASSMCELL});
+		//PropositionalFunction inMacrocell = new InMacroCell(PFINMCELL, DOMAIN, new String[]{CLASSAGENT,CLASSMCELL});
+		//PropositionalFunction inRewardingMacrocell = new InRewardingMacroCell(PFINREWARDMCELL, DOMAIN, new String[]{CLASSAGENT,CLASSMCELL});
 
 		return DOMAIN;
 	}
@@ -82,6 +87,7 @@ public class IRLGridWorld extends GridWorldDomain{
 		
 		s.addObject(new ObjectInstance(d.getObjectClass(CLASSAGENT), CLASSAGENT+0));
 		
+		/*
 		//generate random small values for macrocells
 		List<Integer> mrewards = new ArrayList<Integer>();
 		for (int i = 0; i < MCELL_COUNT; i++) {
@@ -100,84 +106,49 @@ public class IRLGridWorld extends GridWorldDomain{
 			o.setValue(MCELL_REWARD, mrewards.get(i));
 			s.addObject(o);
 		}
-		
+		*/
 		return s;
 	}
+
+	public static PropositionalFunction[] getPropositionalFunctions(Domain domain) {
+		int width = IRLGridWorld.WIDTH / IRLGridWorld.MCELL_WIDTH;
+		int height = IRLGridWorld.HEIGHT / IRLGridWorld.MCELL_HEIGHT;
+		int count = IRLGridWorld.MCELL_WIDTH * IRLGridWorld.MCELL_HEIGHT;
+		PropositionalFunction[] functions = new PropositionalFunction[count];
+		int index = 0;
+		for (int i = 0; i < IRLGridWorld.MCELL_WIDTH; ++i) {
+			int x = i * width;
+			for (int j = 0; j < IRLGridWorld.MCELL_HEIGHT; ++j) {
+				int y = j * height;
+				functions[index] = new InMacroCellPF(domain, x, y, width, height);
+				index++;
+			}
+		}
+		return functions;
+	}
 	
-	public List<Integer> getMacroCellRewards(State s) {
-		List<Integer> mrewards = new ArrayList<Integer>();
+	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions, int numberFilled) {
 		
-		List<ObjectInstance> mcells = s.getObjectsOfTrueClass(CLASSMCELL);
-		for (int i = 0; i < mcells.size(); i++) {
-			mrewards.add(mcells.get(i).getDiscValForAttribute(MCELL_REWARD));
+		Random rando = new Random();
+		Double[] mrewards = new Double[functions.length];
+		for (int i = 0; i < MCELL_COUNT; i++) {
+			mrewards[i] = (i < MCELL_FILLED) ? rando.nextDouble() * (MAX_REWARD - MIN_REWARD) + MIN_REWARD : 0;
 		}
-		return mrewards;
-	}
 	
-	/**
-	 * Propositional function for determining if the agent is
-	 * in a particular Macrocell
-	 * 
-	 * @author Mark Ho
-	 *
-	 */
-	public class InMacroCell extends PropositionalFunction{
-
-		public InMacroCell(String name, Domain domain, String[] strings) {
-			super(name, domain, strings);
+		List<Double> rewardList = Arrays.asList(mrewards);
+		Collections.shuffle(rewardList);
+		
+		Map<String, Double> rewards = new HashMap<String, Double>();
+		for (int i = 0; i < functions.length; i++) {
+			rewards.put(functions[i].getName(), rewardList.get(i));
+			System.out.println(functions[i].getName() + " reward: " + rewardList.get(i));
 		}
-
-		@Override
-		public boolean isTrue(State s, String[] params) {
-			// TODO Auto-generated method stub
-			ObjectInstance agent = s.getObject(params[0]);
-			ObjectInstance macrocell = s.getObject(params[1]);
-			
-			//check if the agent's x,y coordinates are in the macrocell
-			int ax = agent.getDiscValForAttribute(ATTX);
-			int ay = agent.getDiscValForAttribute(ATTY);
-			int amx = (ax*MCELL_WIDTH)/WIDTH;
-			int amy = (ay*MCELL_HEIGHT)/HEIGHT;
-			int ami = amy*MCELL_WIDTH+amx;
-			
-			int mi = macrocell.getDiscValForAttribute(MCELL_INDEX);
-			
-			if(ami == mi) {
-				return true;
-			}
-			
-			return false;
-		}
+		return rewards;
 	}
+
 	
-	public class InRewardingMacroCell extends PropositionalFunction{
+	
 
-		public InRewardingMacroCell(String name, Domain domain, String[] strings) {
-			super(name, domain, strings);
-		}
-
-		@Override
-		public boolean isTrue(State s, String[] params) {
-			// TODO Auto-generated method stub
-			ObjectInstance agent = s.getObject(params[0]);
-			ObjectInstance macrocell = s.getObject(params[1]);
-			
-			//check if the agent's x,y coordinates are in the macrocell
-			int ax = agent.getDiscValForAttribute(ATTX);
-			int ay = agent.getDiscValForAttribute(ATTY);
-			int amx = (ax*MCELL_WIDTH)/WIDTH;
-			int amy = (ay*MCELL_HEIGHT)/HEIGHT;
-			int ami = amy*MCELL_WIDTH+amx;
-			
-			int mi = macrocell.getDiscValForAttribute(MCELL_INDEX);
-			int mr = macrocell.getDiscValForAttribute(MCELL_REWARD);
-			
-			if(ami == mi &&  mr > 0) {
-				return true;
-			}
-			
-			return false;
-		}
-	}
+	
 	
 }

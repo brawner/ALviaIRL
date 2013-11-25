@@ -7,6 +7,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/burlap.jar"/>
-	<classpathentry kind="lib" path="lib/joptimizer-3.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/joptimizer-3.2.0.jar" sourcepath="/Users/brawner/Downloads/joptimizer-3.2.0-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

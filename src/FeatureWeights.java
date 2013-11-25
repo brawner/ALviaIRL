@@ -17,6 +17,8 @@ import burlap.oomdp.core.State;
  * @author brawner
  *
  */
+// TODO Separate static methods from class and put IRL
+// TODO put rest of class in IRL
 public class FeatureWeights {
 	private double[] weights;
 	private double score;
@@ -72,7 +74,7 @@ public class FeatureWeights {
 		for (FeatureExpectations expectations : featureExpectations) {
 			double[] expectationValues = expectations.getValues();
 			double[] difference = new double[weightsSize + 1];
-			for (int i = 0; i < difference.length; ++i) {
+			for (int i = 0; i < expectationValues.length; ++i) {
 				difference[i] = expectationValues[i] - expertValues[i];
 			}
 			difference[weightsSize] = 1;
@@ -83,21 +85,27 @@ public class FeatureWeights {
 		// P = Identity, except for the last entry (which cancels t).
 		double[][] identityMatrix = Utils.createConstantDiagonalMatrix(weightsSize + 1, 1);
 		identityMatrix[weightsSize][weightsSize] = 0;
-		expertBasedWeightConstraints.add(new QuadraticMultivariateRealFunction(identityMatrix, null, -1));
+		expertBasedWeightConstraints.add(new QuadraticMultivariateRealFunction(identityMatrix, null, -0.5));
 		
 		OptimizationRequest optimizationRequest = new OptimizationRequest();
 		optimizationRequest.setF0(objectiveFunction);
 		optimizationRequest.setFi(expertBasedWeightConstraints.toArray(new ConvexMultivariateRealFunction[expertBasedWeightConstraints.size()]));
 		optimizationRequest.setCheckKKTSolutionAccuracy(true);
 		
-		optimizationRequest.setA(new double[weightsSize + 1][weightsSize + 1]);
-		optimizationRequest.setB(new double[weightsSize + 1]);
+		//optimizationRequest.setA(new double[weightsSize + 1][weightsSize + 1]);
+		//optimizationRequest.setB(new double[weightsSize + 1]);
 		optimizationRequest.setTolerance(1.E-12);
 		optimizationRequest.setToleranceFeas(1.E-12);
 		
 		JOptimizer optimizer = new JOptimizer();
 		optimizer.setOptimizationRequest(optimizationRequest);
+		try {
+			optimizer.optimize();
+		} catch (Exception e) {
+			return null;
+		}
 		OptimizationResponse optimizationResponse = optimizer.getOptimizationResponse();
+		
 		double[] solution = optimizationResponse.getSolution();
 		double[] weights = Arrays.copyOfRange(solution, 0, weightsSize);
 		double score = solution[weightsSize];

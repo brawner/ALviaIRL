@@ -1,8 +1,10 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 
 /**
@@ -10,22 +12,17 @@ import burlap.oomdp.core.State;
  * @author brawner
  *
  */
+//TODO put in IRL class
 public class FeatureMapping {
-	private Map<State, double[]> mapping;
+	private PropositionalFunction[] propositionalFunctions;
 	
-	private FeatureMapping(List<State> stateSequence, List<double[]> mappedValues)
+	private FeatureMapping(PropositionalFunction[] functions)
 	{
-		this.mapping = new HashMap<State, double[]>(stateSequence.size());
-		Iterator<State> stateIterator = null;
-		Iterator<double[]> valueIterator = null;
-		for (stateIterator = stateSequence.iterator(), valueIterator = mappedValues.iterator(); 
-				stateIterator.hasNext() && valueIterator.hasNext();) {
-			this.mapping.put((State)stateIterator.next(), (double[])valueIterator.next());
-		}
+		this.propositionalFunctions = functions.clone();
 	}
 	
 	public FeatureMapping(FeatureMapping featureMapping) {
-		this.mapping = new HashMap<State, double[]>(featureMapping.mapping);
+		this.propositionalFunctions = featureMapping.getPropositionalFunctions();
 	}
 
 	/**
@@ -34,25 +31,19 @@ public class FeatureMapping {
 	 * @param mappedValues The mapped values of the states
 	 * @return
 	 */
-	public static FeatureMapping CreateFeatureMapping(List<State> stateSequence, List<double[]> mappedValues)
+	public static FeatureMapping CreateFeatureMapping(PropositionalFunction[] propositionalFunctions)
 	{
-		if (stateSequence == null || mappedValues == null) {
+		if (propositionalFunctions == null || propositionalFunctions.length == 0) {
 			return null;
 		}
-		if (stateSequence.size() != mappedValues.size()) {
-			return null;
-		}
-		return new FeatureMapping(stateSequence, mappedValues);
+		return new FeatureMapping(propositionalFunctions);
 	}	
 	
-	public double[] getMappedStateValue(State state) {
-		return this.mapping.get(state);
+	public PropositionalFunction[] getPropositionalFunctions() {
+		return this.propositionalFunctions.clone();
 	}
 	
 	public int getFeatureSize() {
-		if (this.mapping.size() > 0) {
-			return this.mapping.values().iterator().next().length;
-		}
-		return 0;
+		return this.propositionalFunctions.length;
 	}
 }

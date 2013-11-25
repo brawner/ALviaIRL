@@ -33,6 +33,7 @@ public class RandomPolicy extends Policy {
 	 */
 	public RandomPolicy(Domain domain) {
 		this.stateActionMapping = new HashMap<StateHashTuple, GroundedAction>();
+		this.stateActionDistributionMapping = new HashMap<StateHashTuple, List<ActionProb>>();
 		this.actions = domain.getActions();
 		this.rando = new Random();
 		this.hashFactory = new NameDependentStateHashFactory();
