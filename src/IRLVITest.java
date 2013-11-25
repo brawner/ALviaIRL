@@ -131,8 +131,12 @@ public class IRLVITest {
 		
 		
 		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
-		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 1000);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
 		resultEpisode.writeToFile(outputPath + "Result", sp);
+		
+		Policy projectionPolicy = InverseReinforcementLearning.projectionMethod(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
+		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
+		projectionEpisode.writeToFile(outputPath + "Projection", sp);
 	}
 	
 	/**
@@ -169,8 +173,12 @@ public class IRLVITest {
 		
 		
 		Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, expertEpisodes	, 0.9, 0.01, 100);
-		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 1000);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
 		resultEpisode.writeToFile(outputPath + "Result", sp);
+		
+		Policy projectionPolicy = InverseReinforcementLearning.projectionMethod(this.domain, planner, featureMapping, expertEpisodes, 0.9, 0.01, 100);
+		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
+		projectionEpisode.writeToFile(outputPath + "Projection", sp);
 	}
 	
 	

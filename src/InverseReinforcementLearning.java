@@ -215,7 +215,7 @@ public class InverseReinforcementLearning {
 	 */
 	public static Policy projectionMethod(
 										Domain domain, 
-										DeterministicPlanner planner, 
+										OOMDPPlanner planner, 
 										FeatureMapping featureMapping, 
 										List<EpisodeAnalysis> expertEpisodes, 
 										double gamma, double epsilon, int maxIterations) {
@@ -247,7 +247,7 @@ public class InverseReinforcementLearning {
 		policyHistory.add(policy);
 		
 		// (1b) Set up initial Feature Expectation based on policy
-		EpisodeAnalysis episodeAnalysis = policy.evaluateBehavior(initialState, null, maximumExpertEpisodeLength);
+		EpisodeAnalysis episodeAnalysis = policy.evaluateBehavior(initialState, new UniformCostRF()	, maximumExpertEpisodeLength);
 		FeatureExpectations curFE = InverseReinforcementLearning.generateFeatureExpectations(episodeAnalysis, featureMapping, gamma);
 		featureExpectationsHistory.add(new FeatureExpectations(curFE));
 		FeatureExpectations lastProjFE = null;
@@ -278,8 +278,15 @@ public class InverseReinforcementLearning {
 			// (4b) Compute optimal policy for pi^(i) give R
 			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
 			planner.planFromState(initialState);
-			policy = new DDPlannerPolicy(planner);
+			if (planner instanceof DeterministicPlanner) {
+				policy = new DDPlannerPolicy((DeterministicPlanner)planner);
+			}
+			else if (planner instanceof QComputablePlanner) {
+				policy = new GreedyQPolicy((QComputablePlanner)planner);
+			}
 			policyHistory.add(policy);
+			
+			
 			
 			// (5) Compute u^(i) = u(pi^(i))
 			episodeAnalysis = policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength);
@@ -291,13 +298,4 @@ public class InverseReinforcementLearning {
 		
 		return policy;
 	}
-	
-	
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-
-	
 }
