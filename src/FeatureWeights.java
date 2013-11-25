@@ -17,6 +17,8 @@ import burlap.oomdp.core.State;
  * @author brawner
  *
  */
+// TODO Separate static methods from class and put IRL
+// TODO put rest of class in IRL
 public class FeatureWeights {
 	private double[] weights;
 	private double score;

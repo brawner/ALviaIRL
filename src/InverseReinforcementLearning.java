@@ -21,7 +21,10 @@ import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 
-
+//TODO change package to Burlap.***.IRL.ApprenticeshipLearning
+//TODO encapsulate FeatureMapping/FeatureExpectations here
+//TODO FeatureMappingRF in IRL class
+//TODO FeatureWeights class in here, put static in IRL class
 public class InverseReinforcementLearning {
 
 	/**
@@ -289,8 +292,11 @@ public class InverseReinforcementLearning {
 			
 			
 			// (5) Compute u^(i) = u(pi^(i))
-			episodeAnalysis = policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength);
-			curFE = InverseReinforcementLearning.generateFeatureExpectations(episodeAnalysis, featureMapping, gamma);
+			List<EpisodeAnalysis> evaluatedEpisodes = new ArrayList<EpisodeAnalysis>();
+			for (int j = 0; j < 10; ++j) {
+				evaluatedEpisodes.add(policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength));
+			}
+			curFE = InverseReinforcementLearning.generateExpertFeatureExpectations(evaluatedEpisodes, featureMapping, gamma);
 			featureExpectationsHistory.add(new FeatureExpectations(curFE));
 			
 			// (6) i++, go back to (2).

@@ -4,6 +4,7 @@
  * @author brawner
  *
  */
+//TODO put in IRL class
 public class FeatureExpectations {
 		private double[] featureExpectations;
 		public FeatureExpectations(double[] featureExpectations) {

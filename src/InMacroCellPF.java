@@ -5,6 +5,7 @@ import burlap.oomdp.core.ObjectInstance;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 
+//TODO Move into appropriate class
 public class InMacroCellPF extends PropositionalFunction{
 	private int left, right, top, bottom;
 	

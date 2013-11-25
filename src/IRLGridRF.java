@@ -9,6 +9,7 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
+//TODO remove
 public class IRLGridRF implements RewardFunction {
 
 	int nCells;

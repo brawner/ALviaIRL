@@ -1,6 +1,7 @@
 
 	package burlap.oomdp.singleagent.explorer;
 
+	//TODO merge into Burlap VisualExplorer
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;

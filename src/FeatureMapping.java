@@ -12,6 +12,7 @@ import burlap.oomdp.core.State;
  * @author brawner
  *
  */
+//TODO put in IRL class
 public class FeatureMapping {
 	private PropositionalFunction[] propositionalFunctions;
 	

@@ -9,7 +9,7 @@ import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
-
+//TODO 
 public class FeatureMappingRF implements RewardFunction {
 	private Map<String, Double> rewards;
 	private PropositionalFunction[] propositionalFunctions;
