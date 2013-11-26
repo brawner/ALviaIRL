@@ -27,9 +27,9 @@ import burlap.oomdp.visualizer.Visualizer;
 
 //TODO rename to IRLDEMO
 //TODO move refactor ValueIterationExample
-public class IRLVITest {
+public class IRLGridWorldDemo {
 
-	IRLGridWorld 				irlgw;
+	MacroGridWorld 				irlgw;
 	Domain						domain;
 	StateParser 				sp;
 	RewardFunction 				rf;
@@ -38,17 +38,17 @@ public class IRLVITest {
 	DiscreteStateHashFactory	hashingFactory;
 	
 	
-	public IRLVITest() {
+	public IRLGridWorldDemo() {
 		
-		irlgw = new IRLGridWorld(); //create an 11x11 grid world
+		irlgw = new MacroGridWorld(); //create an 11x11 grid world
 		//gwdg.setProbSucceedTransitionDynamics(0.8); //optional to make transition dynamics stochastic
 		domain = irlgw.generateDomain();
 		sp = new GridWorldStateParser(domain); //for writing states to a file
 		
 		
 		//set up the initial state
-		initialState = IRLGridWorld.getOneAgentState(domain);
-		IRLGridWorld.setAgent(initialState, 0, 0);
+		initialState = MacroGridWorld.getOneAgentState(domain);
+		MacroGridWorld.setAgent(initialState, 0, 0);
 		
 		//rf = new IRLGridRF(irlgw.getMacroCellRewards(initialState));
 			
@@ -62,7 +62,7 @@ public class IRLVITest {
 		//when computing hash values this will ignore the attributes of the location objects. since location objects cannot be moved
 		//by any action, there is no reason to include the in the computation for our task.
 		//if the below line was not included, the hashingFactory would use every attribute of every object class
-		hashingFactory.setAttributesForClass(IRLGridWorld.CLASSAGENT, domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList);
+		hashingFactory.setAttributesForClass(MacroGridWorld.CLASSAGENT, domain.getObjectClass(GridWorldDomain.CLASSAGENT).attributeList);
 	}
 
 	
@@ -74,10 +74,10 @@ public class IRLVITest {
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, irlgw.getMap());
 		VisualExplorerRecorder exp = new VisualExplorerRecorder(domain, v, initialState);
 		
-		exp.addKeyAction("w", IRLGridWorld.ACTIONNORTH);
-		exp.addKeyAction("s", IRLGridWorld.ACTIONSOUTH);
-		exp.addKeyAction("d", IRLGridWorld.ACTIONEAST);
-		exp.addKeyAction("a", IRLGridWorld.ACTIONWEST);
+		exp.addKeyAction("w", MacroGridWorld.ACTIONNORTH);
+		exp.addKeyAction("s", MacroGridWorld.ACTIONSOUTH);
+		exp.addKeyAction("d", MacroGridWorld.ACTIONEAST);
+		exp.addKeyAction("a", MacroGridWorld.ACTIONWEST);
 		
 		List<EpisodeAnalysis> recordedEpisodes = new ArrayList<EpisodeAnalysis>();
 		exp.initGUIAndRecord(recordedEpisodes);
@@ -109,10 +109,11 @@ public class IRLVITest {
 			outputPath = outputPath + "/";
 		}
 		
-		PropositionalFunction[] functions = IRLGridWorld.getPropositionalFunctions(this.domain);
-		FeatureMapping featureMapping = FeatureMapping.CreateFeatureMapping(functions);
-		Map<String, Double> rewards = IRLGridWorld.generateRandomRewards(functions, IRLGridWorld.MCELL_FILLED);
-		RewardFunction randomReward = new FeatureMappingRF(functions, rewards);
+		PropositionalFunction[] functions = MacroGridWorld.getPropositionalFunctions(this.domain);
+		ApprenticeshipLearning.FeatureMapping featureMapping = ApprenticeshipLearning.FeatureMapping.CreateFeatureMapping(functions);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(functions, MacroGridWorld.MCELL_FILLED);
+		RewardFunction randomReward = new ApprenticeshipLearning.FeatureMappingRF(functions, rewards);
+		rf = randomReward;
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
 		ValueIteration planner = new ValueIteration(domain, randomReward, tf, 0.9, hashingFactory, .01, 100);		
@@ -127,7 +128,7 @@ public class IRLVITest {
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < 10; ++i) {
-			EpisodeAnalysis episode = p.evaluateBehavior(initialState, rf, tf,100);
+			EpisodeAnalysis episode = p.evaluateBehavior(initialState, randomReward, tf,100);
 			episodes.add(episode);
 			episode.writeToFile(outputPath + "ExpertDemo" + i, sp);
 			
@@ -142,7 +143,7 @@ public class IRLVITest {
 		
 		
 		start = System.currentTimeMillis();
-		Policy projectionPolicy = InverseReinforcementLearning.projectionMethod(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
+		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureMapping, episodes, 0.9, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
 		end = System.currentTimeMillis();
@@ -160,10 +161,10 @@ public class IRLVITest {
 			outputPath = outputPath + "/";
 		}
 		
-		PropositionalFunction[] functions = IRLGridWorld.getPropositionalFunctions(this.domain);
-		FeatureMapping featureMapping = FeatureMapping.CreateFeatureMapping(functions);
-		Map<String, Double> rewards = IRLGridWorld.generateRandomRewards(functions, IRLGridWorld.MCELL_FILLED);
-		RewardFunction randomReward = new FeatureMappingRF(functions, rewards);
+		PropositionalFunction[] functions = MacroGridWorld.getPropositionalFunctions(this.domain);
+		ApprenticeshipLearning.FeatureMapping featureMapping = ApprenticeshipLearning.FeatureMapping.CreateFeatureMapping(functions);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(functions, MacroGridWorld.MCELL_FILLED);
+		RewardFunction randomReward = new ApprenticeshipLearning.FeatureMappingRF(functions, rewards);
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
 		ValueIteration planner = new ValueIteration(domain, randomReward, tf, 0.9, hashingFactory, .01, 100);		
@@ -182,7 +183,7 @@ public class IRLVITest {
 		}
 		
 		long start = System.currentTimeMillis();
-		//Policy policy = InverseReinforcementLearning.generatePolicyTilde(this.domain, planner, featureMapping, expertEpisodes, 0.9, 0.01, 100);
+		//Policy policy = InverseReinforcementLearning.maxMarginMethod(this.domain, planner, featureMapping, expertEpisodes, 0.9, 0.01, 100);
 		//EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
 		//resultEpisode.writeToFile(outputPath + "Result", sp);
 		long end = System.currentTimeMillis();
@@ -190,7 +191,7 @@ public class IRLVITest {
 		
 		
 		start = System.currentTimeMillis();
-		Policy projectionPolicy = InverseReinforcementLearning.projectionMethod(this.domain, planner, featureMapping, expertEpisodes, 0.9, 0.01, 100);
+		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureMapping, expertEpisodes, 0.9, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
 		end = System.currentTimeMillis();
@@ -204,7 +205,7 @@ public class IRLVITest {
 	 */
 	public static void main(String[] args) {
 		
-		IRLVITest tester = new IRLVITest();
+		IRLGridWorldDemo tester = new IRLGridWorldDemo();
 		
 		String outputPath = "output"; //directory to record results
 		
