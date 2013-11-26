@@ -25,7 +25,7 @@ import burlap.oomdp.singleagent.RewardFunction;
 // TODO Rename to MacroCell gridworld
 // TODO remove commented code
 // TODO move in InMacroCellPF here
-public class IRLGridWorld extends GridWorldDomain{
+public class MacroGridWorld extends GridWorldDomain{
 	
 	public static final String							MCELL_INDEX = "mcelli";
 	public static final String							MCELL_REWARD = "mcellreward";
@@ -35,17 +35,17 @@ public class IRLGridWorld extends GridWorldDomain{
 	public static final String							ATTSTEPS = "agentstepsattribute";
 	public static final int								MIN_REWARD = 1;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 8;
-	public static final int								WIDTH = 8;
+	public static final int								HEIGHT = 20;
+	public static final int								WIDTH = 20;
 	
-	public static final int								MCELL_HEIGHT = 4;
-	public static final int								MCELL_WIDTH = 4;
+	public static final int								MCELL_HEIGHT = 10;
+	public static final int								MCELL_WIDTH = 10;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
-	public static final int								MCELL_FILLED = 1;
+	public static final int								MCELL_FILLED = 2;
 	
 
 	
-	public IRLGridWorld() {
+	public MacroGridWorld() {
 		super(WIDTH, HEIGHT); //default gridworld
 		
 		//There are 4 actions (cardinal directions)
@@ -111,14 +111,14 @@ public class IRLGridWorld extends GridWorldDomain{
 	}
 
 	public static PropositionalFunction[] getPropositionalFunctions(Domain domain) {
-		int width = IRLGridWorld.WIDTH / IRLGridWorld.MCELL_WIDTH;
-		int height = IRLGridWorld.HEIGHT / IRLGridWorld.MCELL_HEIGHT;
-		int count = IRLGridWorld.MCELL_WIDTH * IRLGridWorld.MCELL_HEIGHT;
+		int width = MacroGridWorld.WIDTH / MacroGridWorld.MCELL_WIDTH;
+		int height = MacroGridWorld.HEIGHT / MacroGridWorld.MCELL_HEIGHT;
+		int count = MacroGridWorld.MCELL_WIDTH * MacroGridWorld.MCELL_HEIGHT;
 		PropositionalFunction[] functions = new PropositionalFunction[count];
 		int index = 0;
-		for (int i = 0; i < IRLGridWorld.MCELL_WIDTH; ++i) {
+		for (int i = 0; i < MacroGridWorld.MCELL_WIDTH; ++i) {
 			int x = i * width;
-			for (int j = 0; j < IRLGridWorld.MCELL_HEIGHT; ++j) {
+			for (int j = 0; j < MacroGridWorld.MCELL_HEIGHT; ++j) {
 				int y = j * height;
 				functions[index] = new InMacroCellPF(domain, x, y, width, height);
 				index++;
@@ -146,7 +146,31 @@ public class IRLGridWorld extends GridWorldDomain{
 		return rewards;
 	}
 
-	
+	public static class InMacroCellPF extends PropositionalFunction{
+		private int left, right, top, bottom;
+		
+		public InMacroCellPF(Domain domain, int x, int y, int width, int height) {
+			super("[" + x + ", " + y + "]", domain, "");
+			this.left = x;
+			this.right = x + width;
+			this.bottom = y;
+			this.top = y + width;
+		}
+
+		@Override
+		public boolean isTrue(State state, String[] params) {
+			List<ObjectInstance> agents = state.getObjectsOfTrueClass(MacroGridWorld.CLASSAGENT);
+			if (agents.size() == 0) {
+				return false;
+			}
+			ObjectInstance agent = agents.get(0);
+			int agentX = agent.getDiscValForAttribute(MacroGridWorld.ATTX);
+			int agentY = agent.getDiscValForAttribute(MacroGridWorld.ATTY);
+			return (left <= agentX && agentX <= right &&
+					bottom <= agentY && agentY <= top);
+				
+		}
+	}
 	
 
 	
