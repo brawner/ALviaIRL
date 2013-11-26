@@ -108,5 +108,4 @@ public class RandomPolicy extends Policy {
 	public boolean isStochastic() {
 		return true;
 	}
-
 }

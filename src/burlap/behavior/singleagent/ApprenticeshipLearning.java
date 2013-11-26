@@ -1,27 +1,20 @@
+package burlap.behavior.singleagent;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
-import com.joptimizer.functions.ConvexMultivariateRealFunction;
-import com.joptimizer.functions.LinearMultivariateRealFunction;
-import com.joptimizer.functions.QuadraticMultivariateRealFunction;
-import com.joptimizer.optimizers.JOptimizer;
-import com.joptimizer.optimizers.OptimizationRequest;
-import com.joptimizer.optimizers.OptimizationResponse;
-import com.joptimizer.util.Utils;
-
-import burlap.behavior.singleagent.EpisodeAnalysis;
-import burlap.behavior.singleagent.Policy;
-import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.OOMDPPlanner;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.deterministic.DDPlannerPolicy;
 import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
-import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
+import burlap.behavior.statehashing.NameDependentStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
+import burlap.behavior.statehashing.StateHashTuple;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
@@ -31,10 +24,19 @@ import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 
-//TODO change package to Burlap.***.IRL.ApprenticeshipLearning
-//TODO encapsulate FeatureMapping/FeatureExpectations here
-//TODO FeatureMappingRF in IRL class
-//TODO FeatureWeights class in here, put static in IRL class
+import com.joptimizer.functions.ConvexMultivariateRealFunction;
+import com.joptimizer.functions.LinearMultivariateRealFunction;
+import com.joptimizer.functions.QuadraticMultivariateRealFunction;
+import com.joptimizer.optimizers.JOptimizer;
+import com.joptimizer.optimizers.OptimizationRequest;
+import com.joptimizer.optimizers.OptimizationResponse;
+import com.joptimizer.util.Utils;
+
+/**
+ * 
+ * @author brawner markkho
+ *
+ */
 public class ApprenticeshipLearning {
 	
 	public static final int								FEATURE_EXPECTATION_SAMPLES = 10;
@@ -46,46 +48,39 @@ public class ApprenticeshipLearning {
 	 * @param gamma Discount factor gamma
 	 * @return The Feature Expectations generated (double array that matches the length of the featureMapping)
 	 */
-	public static FeatureExpectations estimateFeatureExpectation(EpisodeAnalysis episodeAnalysis, FeatureMapping featureMapping, Double gamma) {
-		double[] featureExpectationValues = new double[featureMapping.getFeatureSize()];
-		for (int i = 0; i < episodeAnalysis.stateSequence.size(); ++i) {
-			PropositionalFunction[] propositionalFunctions = featureMapping.getPropositionalFunctions();
-			for (int j = 0; j < featureExpectationValues.length; ++j) {
-				if (propositionalFunctions[j].isTrue(episodeAnalysis.stateSequence.get(i), new String[]{})) {
-					featureExpectationValues[j] += Math.pow(gamma, i);
-				}
-				
-			}
-		}
-		return new FeatureExpectations(featureExpectationValues);
+	public static double[] estimateFeatureExpectation(
+			EpisodeAnalysis episodeAnalysis, PropositionalFunction[] featureFunctions, Double gamma) {
+		return ApprenticeshipLearning.estimateFeatureExpectation(
+				Arrays.asList(episodeAnalysis), featureFunctions, gamma);
 	}
 	
 	/**
-	 * Calculates the Feature Expectations given a list of expert demonstrations, a feature mapping and a discount factor gamma
-	 * @param expertEpisodes List of expert demonstrations as EpisodeAnalysis objects
+	 * Calculates the Feature Expectations given a list of demonstrations, a feature mapping and a 
+	 * discount factor gamma
+	 * @param episodes List of expert demonstrations as EpisodeAnalysis objects
 	 * @param featureMapping Feature Mapping which maps states to features
 	 * @param gamma Discount factor for future expected reward
 	 * @return The Feature Expectations generated (double array that matches the length of the featureMapping)
 	 */
-	private static FeatureExpectations estimateFeatureExpectation(List<EpisodeAnalysis> expertEpisodes, FeatureMapping featureMapping, Double gamma) {
-		double[] featureExpectationValues = new double[featureMapping.getFeatureSize()];
+	private static double[] estimateFeatureExpectation(
+			List<EpisodeAnalysis> episodes, PropositionalFunction[] featureFunctions, Double gamma) {
+		double[] featureExpectations = new double[featureFunctions.length];
 		
-		for (EpisodeAnalysis episodeAnalysis : expertEpisodes) {
+		for (EpisodeAnalysis episodeAnalysis : episodes) {
 			for (int i = 0; i < episodeAnalysis.stateSequence.size(); ++i) {
-				PropositionalFunction[] propositionalFunctions = featureMapping.getPropositionalFunctions();
-				for (int j = 0; j < featureExpectationValues.length; ++j) {
-					if (propositionalFunctions[j].isTrue(episodeAnalysis.stateSequence.get(i), new String[]{})) {
-						featureExpectationValues[j] += Math.pow(gamma, i);
+				for (int j = 0; j < featureExpectations.length; ++j) {
+					if (featureFunctions[j].isTrue(episodeAnalysis.stateSequence.get(i), new String[]{})) {
+						featureExpectations[j] += Math.pow(gamma, i);
 					}
 				}
 			}
 		}
 		
-		// Normalize the expert feature expectation values
-		for (int i = 0; i < featureExpectationValues.length; ++i) {
-			featureExpectationValues[i] /= expertEpisodes.size();
+		// Normalize the feature expectation values
+		for (int i = 0; i < featureExpectations.length; ++i) {
+			featureExpectations[i] /= episodes.size();
 		}
-		return new FeatureExpectations(featureExpectationValues);
+		return featureExpectations;
 	}
 	
 	/**
@@ -96,19 +91,17 @@ public class ApprenticeshipLearning {
 	 * @param featureWeights The weights given to each feature
 	 * @return An anonymous instance of RewardFunction
 	 */
-	public static RewardFunction generateRewardFunction(FeatureMapping featureMapping, FeatureWeights featureWeights) {
-		final FeatureMapping newFeatureMapping = new FeatureMapping(featureMapping);
+	public static RewardFunction generateRewardFunction(
+			PropositionalFunction[] featureFunctions, FeatureWeights featureWeights) {
+		final PropositionalFunction[] newFeatureFunctions = featureFunctions.clone();
 		final FeatureWeights newFeatureWeights = new FeatureWeights(featureWeights);
 		return new RewardFunction() {
-
 			@Override
 			public double reward(State state, GroundedAction a, State sprime) {
-				PropositionalFunction[] propositionalFunctions = newFeatureMapping.getPropositionalFunctions();
 				double[] featureWeightValues = newFeatureWeights.getWeights();
-				
 				double sumReward = 0;
-				for (int i = 0; i < propositionalFunctions.length; ++i) {
-					if (propositionalFunctions[i].isTrue(state, new String[]{})) {
+				for (int i = 0; i < newFeatureFunctions.length; ++i) {
+					if (newFeatureFunctions[i].isTrue(state, new String[]{})) {
 						sumReward += featureWeightValues[i];
 					}
 				}
@@ -151,10 +144,12 @@ public class ApprenticeshipLearning {
 	 * @return
 	 */
 	
-	public static Policy maxMarginMethod(Domain domain, OOMDPPlanner planner, FeatureMapping featureMapping, List<EpisodeAnalysis> expertEpisodes, double gamma, double epsilon, int maxIterations) {
+	public static Policy maxMarginMethod(
+			Domain domain, OOMDPPlanner planner, PropositionalFunction[] featureFunctions, List<EpisodeAnalysis> expertEpisodes, double gamma, double epsilon, int maxIterations) {
 		int maximumExpertEpisodeLength = 0;
 		for (EpisodeAnalysis expertEpisode : expertEpisodes) {
-			maximumExpertEpisodeLength = Math.max(maximumExpertEpisodeLength, expertEpisode.numTimeSteps());
+			maximumExpertEpisodeLength = 
+					Math.max(maximumExpertEpisodeLength, expertEpisode.numTimeSteps());
 		}
 		
 		TerminalFunction terminalFunction = planner.getTF();
@@ -163,8 +158,9 @@ public class ApprenticeshipLearning {
 		// (1). Randomly generate policy pi^(0)
 		Policy policy = new RandomPolicy(domain);
 		
-		List<FeatureExpectations> featureExpectationsHistory = new ArrayList<FeatureExpectations>();
-		FeatureExpectations expertExpectations = ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureMapping, gamma);
+		List<double[]> featureExpectationsHistory = new ArrayList<double[]>();
+		double[] expertExpectations = 
+				ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, gamma);
 		
 		State initialState = ApprenticeshipLearning.getInitialState(expertEpisodes);
 		if (initialState == null) {
@@ -172,13 +168,16 @@ public class ApprenticeshipLearning {
 		}
 		
 		// (1b) Compute u^(0) = u(pi^(0))
-		EpisodeAnalysis episodeAnalysis = policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength);
-		FeatureExpectations featureExpectations = ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureMapping, gamma);
-		featureExpectationsHistory.add(new FeatureExpectations(featureExpectations));
+		EpisodeAnalysis episodeAnalysis = 
+				policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength);
+		double[] featureExpectations = 
+				ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureFunctions, gamma);
+		featureExpectationsHistory.add(featureExpectations);
 		
 		for (int i = 0; i < maxIterations; ++i) {
 			// (2) Compute t^(i) = max_w min_j (wT (uE - u^(j)))
-			FeatureWeights featureWeights = solveFeatureWeights(expertExpectations, featureExpectationsHistory);
+			FeatureWeights featureWeights = 
+					solveFeatureWeights(expertExpectations, featureExpectationsHistory);
 
 			// (3) if t^(i) <= epsilon, terminate
 			if (featureWeights == null || Math.abs(featureWeights.getScore()) <= epsilon) {
@@ -186,7 +185,8 @@ public class ApprenticeshipLearning {
 			}
 			
 			// (4a) Calculate R = (w^(i))T * phi 
-			RewardFunction rewardFunction = ApprenticeshipLearning.generateRewardFunction(featureMapping, featureWeights);
+			RewardFunction rewardFunction = 
+					ApprenticeshipLearning.generateRewardFunction(featureFunctions, featureWeights);
 			
 			// (4b) Compute optimal policy for pi^(i) give R
 			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
@@ -201,8 +201,9 @@ public class ApprenticeshipLearning {
 			
 			// (5) Compute u^(i) = u(pi^(i))
 			episodeAnalysis = policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength);
-			featureExpectations = ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureMapping, gamma);
-			featureExpectationsHistory.add(new FeatureExpectations(featureExpectations));
+			featureExpectations = 
+					ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureFunctions, gamma);
+			featureExpectationsHistory.add(featureExpectations);
 			
 			// (6) i++, go back to (2).
 		}
@@ -233,7 +234,7 @@ public class ApprenticeshipLearning {
 	public static Policy projectionMethod(
 										Domain domain, 
 										OOMDPPlanner planner, 
-										FeatureMapping featureMapping, 
+										PropositionalFunction[] featureFunctions, 
 										List<EpisodeAnalysis> expertEpisodes, 
 										double gamma, double epsilon, int maxIterations) {
 		
@@ -250,9 +251,10 @@ public class ApprenticeshipLearning {
 		
 		//(0) set up policy array; exper feature expectation
 		List<Policy> policyHistory = new ArrayList<Policy>();
-		List<FeatureExpectations> featureExpectationsHistory = new ArrayList<FeatureExpectations>();
+		List<double[]> featureExpectationsHistory = new ArrayList<double[]>();
 		
-		FeatureExpectations expertExpectations = ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureMapping, gamma);
+		double[] expertExpectations = 
+				ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, gamma);
 
 		State initialState = ApprenticeshipLearning.getInitialState(expertEpisodes);
 		if (initialState == null) {
@@ -266,19 +268,21 @@ public class ApprenticeshipLearning {
 		// (1b) Set up initial Feature Expectation based on policy
 		List<EpisodeAnalysis> sampleEpisodes = new ArrayList<EpisodeAnalysis>();
 		for (int j = 0; j < FEATURE_EXPECTATION_SAMPLES; ++j) {
-			sampleEpisodes.add(policy.evaluateBehavior(initialState, new UniformCostRF()	, maximumExpertEpisodeLength)); 
+			sampleEpisodes.add(
+					policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength)); 
 		}
-		FeatureExpectations curFE = ApprenticeshipLearning.estimateFeatureExpectation(sampleEpisodes, featureMapping, gamma);
-		featureExpectationsHistory.add(new FeatureExpectations(curFE));
-		FeatureExpectations lastProjFE = null;
-		FeatureExpectations newProjFE = null;
+		double[] curFE = 
+				ApprenticeshipLearning.estimateFeatureExpectation(sampleEpisodes, featureFunctions, gamma);
+		featureExpectationsHistory.add(curFE);
+		double[] lastProjFE = null;
+		double[] newProjFE = null;
 		
 		for (int i = 0; i < maxIterations; ++i) {
 			// (2) Compute weights and score using projection method
 			//THIS IS THE KEY DIFFERENCE BETWEEN THE MAXIMUM MARGIN METHOD AND THE PROJECTION METHOD
 			//On the first iteration, the projection is just set as the current feature expectation
 			if (lastProjFE == null) { 
-				newProjFE = new FeatureExpectations(curFE);
+				newProjFE = curFE.clone();
 			}
 			else {
 				newProjFE = projectExpertFE(expertExpectations, curFE, lastProjFE);
@@ -293,7 +297,8 @@ public class ApprenticeshipLearning {
 			}
 			
 			// (4a) Calculate R = (w^(i))T * phi 
-			RewardFunction rewardFunction = ApprenticeshipLearning.generateRewardFunction(featureMapping, featureWeights);
+			RewardFunction rewardFunction = 
+					ApprenticeshipLearning.generateRewardFunction(featureFunctions, featureWeights);
 			
 			// (4b) Compute optimal policy for pi^(i) give R
 			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
@@ -311,10 +316,11 @@ public class ApprenticeshipLearning {
 			// (5) Compute u^(i) = u(pi^(i))
 			List<EpisodeAnalysis> evaluatedEpisodes = new ArrayList<EpisodeAnalysis>();
 			for (int j = 0; j < FEATURE_EXPECTATION_SAMPLES; ++j) {
-				evaluatedEpisodes.add(policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength));
+				evaluatedEpisodes.add(
+						policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength));
 			}
-			curFE = ApprenticeshipLearning.estimateFeatureExpectation(evaluatedEpisodes, featureMapping, gamma);
-			featureExpectationsHistory.add(new FeatureExpectations(curFE));
+			curFE = ApprenticeshipLearning.estimateFeatureExpectation(evaluatedEpisodes, featureFunctions, gamma);
+			featureExpectationsHistory.add(curFE.clone());
 			
 			// (6) i++, go back to (2).
 		}
@@ -332,34 +338,31 @@ public class ApprenticeshipLearning {
 	 * @param featureExpectations Feature History of feature expectations generated from past policies
 	 * @return
 	 */
-	private static FeatureWeights solveFeatureWeights(FeatureExpectations expertExpectations, List<FeatureExpectations> featureExpectations) {
+	private static FeatureWeights solveFeatureWeights(
+			double[] expertExpectations, List<double[]> featureExpectations) {
 		// We are solving a Quadratic Programming Problem here, yay!
 		// Solve equation of form xT * P * x + qT * x + r
 		// Let x = {w0, w1, ... , wn, t}
-		
-		int weightsSize = expertExpectations.getValues().length;
-		
+		int weightsSize = expertExpectations.length;
 		
 		// The objective is to maximize t, or minimize -t
 		double[] qObjective = new double[weightsSize + 1];
 		qObjective[weightsSize] = -1;
-		LinearMultivariateRealFunction objectiveFunction = new LinearMultivariateRealFunction( qObjective, 0);
+		LinearMultivariateRealFunction objectiveFunction = 
+				new LinearMultivariateRealFunction( qObjective, 0);
 		
 		// We set the requirement that all feature expectations generated have to be less than the expert
-		List<ConvexMultivariateRealFunction> expertBasedWeightConstraints = new ArrayList<ConvexMultivariateRealFunction>();
+		List<ConvexMultivariateRealFunction> expertBasedWeightConstraints = 
+				new ArrayList<ConvexMultivariateRealFunction>();
 		
 		// (1/2)xT * Pi * x + qiT + ri <= 0
 		// Equation (11) wT * uE >= wT * u(j) + t ===>  (u(j) - uE)T * w + t <= 0
 		// Because x = {w0, w1, ... , wn, t}, we can set
 		// qi = {u(j)_1 - uE_1, ... , u(j)_n - uE_n, 1}
-		// TODO Why does http://www.joptimizer.com/qcQuadraticProgramming.html say (1/2)xT * Pi * x + qiT + ri
-		// not (1/2)xT * Pi * x + qiT * x + ri
-		double[] expertValues = expertExpectations.getValues();
-		for (FeatureExpectations expectations : featureExpectations) {
-			double[] expectationValues = expectations.getValues();
+		for (double[] expectations : featureExpectations) {
 			double[] difference = new double[weightsSize + 1];
-			for (int i = 0; i < expectationValues.length; ++i) {
-				difference[i] = expectationValues[i] - expertValues[i];
+			for (int i = 0; i < expectations.length; ++i) {
+				difference[i] = expectations[i] - expertExpectations[i];
 			}
 			difference[weightsSize] = 1;
 			expertBasedWeightConstraints.add(new LinearMultivariateRealFunction(difference, 1));
@@ -373,11 +376,9 @@ public class ApprenticeshipLearning {
 		
 		OptimizationRequest optimizationRequest = new OptimizationRequest();
 		optimizationRequest.setF0(objectiveFunction);
-		optimizationRequest.setFi(expertBasedWeightConstraints.toArray(new ConvexMultivariateRealFunction[expertBasedWeightConstraints.size()]));
+		optimizationRequest.setFi(expertBasedWeightConstraints.toArray(
+				new ConvexMultivariateRealFunction[expertBasedWeightConstraints.size()]));
 		optimizationRequest.setCheckKKTSolutionAccuracy(true);
-		
-		//optimizationRequest.setA(new double[weightsSize + 1][weightsSize + 1]);
-		//optimizationRequest.setB(new double[weightsSize + 1]);
 		optimizationRequest.setTolerance(1.E-12);
 		optimizationRequest.setToleranceFeas(1.E-12);
 		
@@ -407,67 +408,25 @@ public class ApprenticeshipLearning {
 	 * @param lastProjFE - The last (i-2)th projection of the expert's Feature Expectations
 	 * @return A new projection of the Expert's feature Expectation
 	 */
-	private static FeatureExpectations projectExpertFE(FeatureExpectations expertFE,
-														FeatureExpectations lastFE,
-														FeatureExpectations lastProjFE) {
+	private static double[] projectExpertFE(double[] expertFE,
+											double[] lastFE,
+											double[] lastProjFE) {
 
-		//otherwise
-		double[] expertExp = expertFE.getValues();
-		double[] lastExp = lastFE.getValues();
-		double[] lastProjExp = lastProjFE.getValues();
-		double[] newProjExp = new double[lastProjExp.length];
+		double[] newProjExp = new double[lastProjFE.length];
 		
 		for (int i = 0; i < newProjExp.length; i++) {
 			//mu_bar^(i-2) + (mu^(i-1)-mu_bar^(i-2))*
 			//((mu^(i-1)-mu_bar^(i-2))*(mu_E-mu_bar^(i-2)))/
 			//((mu^(i-1)-mu_bar^(i-2))*(mu(i-1)-mu_bar^(i-2)))
-			newProjExp[i] = lastProjExp[i] + (lastExp[i]-lastProjExp[i])*
-								((lastExp[i]-lastProjExp[i])*(expertExp[i]-lastProjExp[i]))/
-								((lastExp[i]-lastProjExp[i])*(lastExp[i]-lastProjExp[i]));
+			newProjExp[i] = lastProjFE[i] + (lastFE[i]-lastProjFE[i])*
+								((lastFE[i]-lastProjFE[i])*(expertFE[i]-lastProjFE[i]))/
+								((lastFE[i]-lastProjFE[i])*(lastFE[i]-lastProjFE[i]));
 		}
 		
-		return new FeatureExpectations(newProjExp);
+		return newProjExp;
 	}
 	
-	/**
-	 * Class for storing a mapping of states to a vector of values indicating features.
-	 * @author brawner
-	 *
-	 */
-	public static class FeatureMapping {
-		private PropositionalFunction[] propositionalFunctions;
-		
-		private FeatureMapping(PropositionalFunction[] functions)
-		{
-			this.propositionalFunctions = functions.clone();
-		}
-		
-		public FeatureMapping(FeatureMapping featureMapping) {
-			this.propositionalFunctions = featureMapping.getPropositionalFunctions();
-		}
-
-		/**
-		 * Factory method for generating feature mappings
-		 * @param stateSequence A List of states
-		 * @param mappedValues The mapped values of the states
-		 * @return
-		 */
-		public static FeatureMapping CreateFeatureMapping(PropositionalFunction[] propositionalFunctions)
-		{
-			if (propositionalFunctions == null || propositionalFunctions.length == 0) {
-				return null;
-			}
-			return new FeatureMapping(propositionalFunctions);
-		}	
-		
-		public PropositionalFunction[] getPropositionalFunctions() {
-			return this.propositionalFunctions.clone();
-		}
-		
-		public int getFeatureSize() {
-			return this.propositionalFunctions.length;
-		}
-	}
+	
 	
 	/**
 	 * Class that returns rewards based on a FeatureMapping and Map from Features to rewards
@@ -475,11 +434,11 @@ public class ApprenticeshipLearning {
 	 * @author markho
 	 *
 	 */
-	public static class FeatureMappingRF implements RewardFunction {
+	public static class FeatureBasedRewardFunction implements RewardFunction {
 		private Map<String, Double> rewards;
 		private PropositionalFunction[] propositionalFunctions;
 		
-		public FeatureMappingRF(PropositionalFunction[] functions, Map<String, Double> rewards) {
+		public FeatureBasedRewardFunction(PropositionalFunction[] functions, Map<String, Double> rewards) {
 			this.propositionalFunctions = functions.clone();
 			this.rewards = new HashMap<String, Double>(rewards);
 		}
@@ -503,15 +462,12 @@ public class ApprenticeshipLearning {
 	 * @param newProjFE
 	 * @return
 	 */
-	private static FeatureWeights getWeightsProjectionMethod(FeatureExpectations expertFE, FeatureExpectations newProjFE){
-		
-		double[] expertExp = expertFE.getValues();
-		double[] newProjExp = newProjFE.getValues();
-		
+	private static FeatureWeights getWeightsProjectionMethod(double[] expertFE, double[] newProjFE){
+	
 		//set the weight as the expert's feature expectation minus the new projection
-		double[] weights = new double[newProjExp.length];
+		double[] weights = new double[newProjFE.length];
 		for (int i = 0; i < weights.length; i++) {
-			weights[i] = expertExp[i] - newProjExp[i];
+			weights[i] = expertFE[i] - newProjFE[i];
 		}
 		
 		//set the score (t) as the L2 norm of the weight
@@ -520,29 +476,6 @@ public class ApprenticeshipLearning {
 		score = Math.sqrt(score);
 		
 		return new FeatureWeights(weights, score);
-	}
-	
-	
-	
-	
-	/** 
-	 * Class that wraps the values of feature expectations
-	 * @author brawner
-	 *
-	 */
-	private static class FeatureExpectations {
-		private double[] featureExpectations;
-		public FeatureExpectations(double[] featureExpectations) {
-			this.featureExpectations = featureExpectations.clone();
-		}
-		
-		public FeatureExpectations(FeatureExpectations featureExpectations) {
-			this.featureExpectations = featureExpectations.getValues();
-		}
-		
-		public double[] getValues() {
-			return this.featureExpectations.clone();
-		}
 	}
 	
 	/**
@@ -573,5 +506,104 @@ public class ApprenticeshipLearning {
 		}
 	}
 	
+	/**
+	 * This class extends Policy, and all it does is create a randomly generated distribution of
+	 * actions over all possible states. It lazily initializes because I have no idea what sorts 
+	 * of states you are passing it.
+	 * @author brawner
+	 *
+	 */
+	public static class RandomPolicy extends Policy {
+		Map<StateHashTuple, GroundedAction> stateActionMapping;
+		List<Action> actions;
+		Map<StateHashTuple, List<ActionProb>> stateActionDistributionMapping;
+		StateHashFactory hashFactory;
+		Random rando;
+		
+		/**
+		 * Constructor initializes the policy, doesn't compute anything here.
+		 * @param domain Domain object for which we need to plan
+		 */
+		private RandomPolicy(Domain domain) {
+			this.stateActionMapping = new HashMap<StateHashTuple, GroundedAction>();
+			this.stateActionDistributionMapping = new HashMap<StateHashTuple, List<ActionProb>>();
+			this.actions = domain.getActions();
+			this.rando = new Random();
+			this.hashFactory = new NameDependentStateHashFactory();
+		}
 
+		public static Policy generateRandomPolicy(Domain domain) {
+			return new RandomPolicy(domain);
+		}
+		
+		/**
+		 * For states which we have not yet visited, this policy needs a randomly generated distribution
+		 * of actions. It queries all the grounded actions possible from this state and assigns a random
+		 * probability to it. The probabilities are all normalized for happiness.
+		 * @param state State for which to generate actions.
+		 */
+		private void addNewDistributionForState(State state) {
+			StateHashTuple stateHashTuple = this.hashFactory.hashState(state);
+			
+			// Get all possible actions from this state
+			List<GroundedAction> groundedActions = state.getAllGroundedActionsFor(this.actions);
+			Double[] probabilities = new Double[groundedActions.size()];
+			Double sum = 0.0;
+			
+			// Create a random distribution of doubles
+			for (int i = 0; i < probabilities.length; ++i) {
+				probabilities[i] = this.rando.nextDouble();
+				sum += probabilities[i];
+			}
+			
+			List<ActionProb> newActionDistribution = new ArrayList<ActionProb>(groundedActions.size());
+			// Normalize distribution and add a new ActionProb to our list.
+			for (int i = 0; i < probabilities.length; ++i) {
+				ActionProb actionProb = new  ActionProb(groundedActions.get(i), probabilities[i] / sum);
+				newActionDistribution.add(actionProb);
+			}
+			
+			this.stateActionDistributionMapping.put(stateHashTuple, newActionDistribution);
+		}
+		
+		@Override
+		public GroundedAction getAction(State s) {
+			StateHashTuple stateHashTuple = this.hashFactory.hashState(s);
+			
+			// If this state has not yet been visited, we need to compute a new distribution of actions
+			if (!this.stateActionDistributionMapping.containsKey(stateHashTuple)) {
+				this.addNewDistributionForState(s);
+			}
+			
+			// Get the action probability distribution for this state
+			List<ActionProb> actionDistribution = this.stateActionDistributionMapping.get(stateHashTuple);
+			Double roll = this.rando.nextDouble();
+			Double probabilitySum = 0.0;
+			
+			// Choose an action randomly from this distribution
+			for (ActionProb actionProb : actionDistribution) {
+				probabilitySum += actionProb.pSelection;
+				if (probabilitySum >= roll) {
+					return actionProb.ga;
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public List<ActionProb> getActionDistributionForState(State s) {
+			StateHashTuple stateHashTuple = this.hashFactory.hashState(s);
+			
+			// If this state has not yet been visited, we need to compute a new distribution of actions
+			if (!this.stateActionDistributionMapping.containsKey(stateHashTuple)) {
+				this.addNewDistributionForState(s);
+			}
+			return new ArrayList<ActionProb>(this.stateActionDistributionMapping.get(stateHashTuple));
+		}
+
+		@Override
+		public boolean isStochastic() {
+			return true;
+		}
+	}
 }
