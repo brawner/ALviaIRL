@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,19 +6,12 @@ import java.util.Map;
 import java.util.Random;
 
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
-import burlap.domain.singleagent.gridworld.GridWorldDomain.AtLocationPF;
-import burlap.domain.singleagent.gridworld.GridWorldDomain.MovementAction;
-import burlap.domain.singleagent.gridworld.GridWorldDomain.WallToPF;
-import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.Attribute;
-import burlap.oomdp.core.PropositionalFunction;
-import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
+import burlap.oomdp.core.ObjectInstance;
+import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
-import burlap.oomdp.singleagent.Action;
-import burlap.oomdp.singleagent.SADomain;
-import burlap.oomdp.singleagent.GroundedAction;
-import burlap.oomdp.singleagent.RewardFunction;
 
 
 // TODO Rename to MacroCell gridworld
