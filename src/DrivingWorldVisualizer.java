@@ -16,7 +16,7 @@ import burlap.oomdp.visualizer.Visualizer;
 
 public class DrivingWorldVisualizer extends GridWorldVisualizer {
 	public static final int grass = 0;
-	public static final int lane = 1;
+	public static final int lane = -1;
 	
 	
 	

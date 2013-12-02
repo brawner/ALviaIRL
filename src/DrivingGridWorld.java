@@ -23,6 +23,8 @@ public class DrivingGridWorld extends GridWorldDomain {
 	public static final String agentClass = "agent";
 	public static final String blockClass = "block";
 	
+	private int laneCount;
+	
 	public DrivingGridWorld(int[][] map) {
 		super(map);
 	}
@@ -32,6 +34,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 		if (laneWidth * numLanes > width) {
 			laneWidth = width / numLanes;
 		}
+		this.laneCount = numLanes;
 		this.map = new int[width][height];
 		int roadWidth = numLanes * laneWidth;
 		int leftGrassRight = width - roadWidth;
@@ -54,7 +57,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 	@Override
 	public Domain generateDomain() {
 		Domain domain = super.generateDomain();
-		ObjectClass agent = new ObjectClass(domain, DrivingGridWorld.agentClass);
+		
 		ObjectClass block = new ObjectClass(domain, DrivingGridWorld.blockClass);
 
 		return domain;
