@@ -49,23 +49,7 @@ public class MacroGridWorld extends GridWorldDomain{
 	
 	@Override
 	public Domain generateDomain() {
-		Domain DOMAIN = super.generateDomain();
-		
-		//Macrocell Attributes
-		Attribute mcelli = new Attribute(DOMAIN, MCELL_INDEX, Attribute.AttributeType.DISC);
-		mcelli.setDiscValuesForRange(0, MCELL_COUNT-1, 1);
-		//Attribute mcellr = new Attribute(DOMAIN, MCELL_REWARD, Attribute.AttributeType.DISC);
-		//mcellr.setDiscValuesForRange(MIN_REWARD, MAX_REWARD, 1);
-		
-		//Macrocell object
-		ObjectClass macrocellClass = new ObjectClass(DOMAIN, CLASSMCELL);
-		macrocellClass.addAttribute(mcelli);
-		//macrocellClass.addAttribute(mcellr);
-		
-		//PropositionalFunction inMacrocell = new InMacroCell(PFINMCELL, DOMAIN, new String[]{CLASSAGENT,CLASSMCELL});
-		//PropositionalFunction inRewardingMacrocell = new InRewardingMacroCell(PFINREWARDMCELL, DOMAIN, new String[]{CLASSAGENT,CLASSMCELL});
-
-		return DOMAIN;
+		return super.generateDomain();
 	}
 	
 	/**
@@ -76,29 +60,7 @@ public class MacroGridWorld extends GridWorldDomain{
 	 */
 	public static State getOneAgentState(Domain d) {
 		State s = new State();
-		
 		s.addObject(new ObjectInstance(d.getObjectClass(CLASSAGENT), CLASSAGENT+0));
-		
-		/*
-		//generate random small values for macrocells
-		List<Integer> mrewards = new ArrayList<Integer>();
-		for (int i = 0; i < MCELL_COUNT; i++) {
-			if (i < MCELL_FILLED) {
-				mrewards.add((int)(Math.random()*((MAX_REWARD-MIN_REWARD)+1)));
-			}
-			else {
-				mrewards.add(0);
-			}
-		}
-		Collections.shuffle(mrewards);
-		
-		for (int i = 0; i < MCELL_COUNT; i++) {
-			ObjectInstance o = new ObjectInstance(d.getObjectClass(CLASSMCELL), CLASSMCELL+i);
-			o.setValue(MCELL_INDEX, i);
-			o.setValue(MCELL_REWARD, mrewards.get(i));
-			s.addObject(o);
-		}
-		*/
 		return s;
 	}
 
