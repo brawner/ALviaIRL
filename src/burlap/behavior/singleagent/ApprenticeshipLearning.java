@@ -146,6 +146,8 @@ public class ApprenticeshipLearning {
 	
 	public static Policy maxMarginMethod(
 			Domain domain, OOMDPPlanner planner, PropositionalFunction[] featureFunctions, List<EpisodeAnalysis> expertEpisodes, double gamma, double epsilon, int maxIterations) {
+		long start = System.currentTimeMillis();
+		
 		int maximumExpertEpisodeLength = 0;
 		for (EpisodeAnalysis expertEpisode : expertEpisodes) {
 			maximumExpertEpisodeLength = 
@@ -154,6 +156,12 @@ public class ApprenticeshipLearning {
 		
 		TerminalFunction terminalFunction = planner.getTF();
 		StateHashFactory stateHashingFactory = planner.getHashingFactory();
+		
+		long end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
 		
 		// (1). Randomly generate policy pi^(0)
 		Policy policy = new RandomPolicy(domain);
@@ -166,6 +174,11 @@ public class ApprenticeshipLearning {
 		if (initialState == null) {
 			return null;
 		}
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
 		
 		// (1b) Compute u^(0) = u(pi^(0))
 		EpisodeAnalysis episodeAnalysis = 
@@ -173,6 +186,12 @@ public class ApprenticeshipLearning {
 		double[] featureExpectations = 
 				ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureFunctions, gamma);
 		featureExpectationsHistory.add(featureExpectations);
+		
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
 		
 		for (int i = 0; i < maxIterations; ++i) {
 			// (2) Compute t^(i) = max_w min_j (wT (uE - u^(j)))
@@ -208,6 +227,11 @@ public class ApprenticeshipLearning {
 			// (6) i++, go back to (2).
 		}
 		
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		
 		return policy;
 	}
 	
@@ -237,7 +261,65 @@ public class ApprenticeshipLearning {
 										PropositionalFunction[] featureFunctions, 
 										List<EpisodeAnalysis> expertEpisodes, 
 										double gamma, double epsilon, int maxIterations) {
-		
+		return ApprenticeshipLearning.projectionMethod(domain, planner, featureFunctions, expertEpisodes, gamma, epsilon, maxIterations, FEATURE_EXPECTATION_SAMPLES, new double[maxIterations]);
+	}
+	
+	/**
+	 * Implements the "projection method" for calculating a policy-tilde with a
+	 * feature expectation within epsilon of an expert's feature expectation.
+	 * As described in:
+	 * Abbeel, Peter and Ng, Andrew. "Apprenticeship Learning via Inverse Reinforcement Learning"
+	 * 
+	 * Takes in an expert's samples in some domain given some features, and returns a list of
+	 * policies that can be evaluated algorithmically or manually.
+	 * 
+	 * Note: I've stored policy histories AND feature expectation histories
+	 * 
+	 * @param domain
+	 * @param planner
+	 * @param featureMapping
+	 * @param expertEpisodes
+	 * @param gamma
+	 * @param epsilon
+	 * @param maxIterations
+	 * @return
+	 */
+	public static Policy projectionMethod(
+										Domain domain, 
+										OOMDPPlanner planner, 
+										PropositionalFunction[] featureFunctions, 
+										List<EpisodeAnalysis> expertEpisodes, 
+										double gamma, double epsilon, int maxIterations, int policyCount) {
+		return ApprenticeshipLearning.projectionMethod(domain, planner, featureFunctions, expertEpisodes, gamma, epsilon, maxIterations, policyCount, new double[maxIterations]);
+	}
+	
+	/**
+	 * Implements the "projection method" for calculating a policy-tilde with a
+	 * feature expectation within epsilon of an expert's feature expectation.
+	 * As described in:
+	 * Abbeel, Peter and Ng, Andrew. "Apprenticeship Learning via Inverse Reinforcement Learning"
+	 * 
+	 * Takes in an expert's samples in some domain given some features, and returns a list of
+	 * policies that can be evaluated algorithmically or manually.
+	 * 
+	 * Note: I've stored policy histories AND feature expectation histories
+	 * 
+	 * @param domain
+	 * @param planner
+	 * @param featureMapping
+	 * @param expertEpisodes
+	 * @param gamma
+	 * @param epsilon
+	 * @param maxIterations
+	 * @return
+	 */
+	public static Policy projectionMethod(
+										Domain domain, 
+										OOMDPPlanner planner, 
+										PropositionalFunction[] featureFunctions, 
+										List<EpisodeAnalysis> expertEpisodes, 
+										double gamma, double epsilon, int maxIterations, int policyCount, double[] tHistory) {
+		long start = System.currentTimeMillis();
 		
 		//Max steps that the apprentice will have to learn
 		int maximumExpertEpisodeLength = 0;
@@ -248,6 +330,12 @@ public class ApprenticeshipLearning {
 		//Planning objects
 		TerminalFunction terminalFunction = planner.getTF();
 		StateHashFactory stateHashingFactory = planner.getHashingFactory();
+		
+		long end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
 		
 		//(0) set up policy array; exper feature expectation
 		List<Policy> policyHistory = new ArrayList<Policy>();
@@ -261,13 +349,25 @@ public class ApprenticeshipLearning {
 			return null;
 		}
 		
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
+		
 		// (1). Randomly generate policy pi^(0)
 		Policy policy = new RandomPolicy(domain);
 		policyHistory.add(policy);
 		
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
+		
 		// (1b) Set up initial Feature Expectation based on policy
 		List<EpisodeAnalysis> sampleEpisodes = new ArrayList<EpisodeAnalysis>();
-		for (int j = 0; j < FEATURE_EXPECTATION_SAMPLES; ++j) {
+		for (int j = 0; j < policyCount; ++j) {
 			sampleEpisodes.add(
 					policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength)); 
 		}
@@ -276,6 +376,12 @@ public class ApprenticeshipLearning {
 		featureExpectationsHistory.add(curFE);
 		double[] lastProjFE = null;
 		double[] newProjFE = null;
+		
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
+		start = System.currentTimeMillis();
 		
 		for (int i = 0; i < maxIterations; ++i) {
 			// (2) Compute weights and score using projection method
@@ -288,7 +394,7 @@ public class ApprenticeshipLearning {
 				newProjFE = projectExpertFE(expertExpectations, curFE, lastProjFE);
 			}
 			FeatureWeights featureWeights = getWeightsProjectionMethod(expertExpectations, newProjFE);
-			
+			tHistory[i] = featureWeights.getScore();
 			lastProjFE = newProjFE; //don't forget to set the old projection to the new one!
 
 			// (3) if t^(i) <= epsilon, terminate
@@ -315,7 +421,7 @@ public class ApprenticeshipLearning {
 			
 			// (5) Compute u^(i) = u(pi^(i))
 			List<EpisodeAnalysis> evaluatedEpisodes = new ArrayList<EpisodeAnalysis>();
-			for (int j = 0; j < FEATURE_EXPECTATION_SAMPLES; ++j) {
+			for (int j = 0; j < policyCount; ++j) {
 				evaluatedEpisodes.add(
 						policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength));
 			}
@@ -324,7 +430,10 @@ public class ApprenticeshipLearning {
 			
 			// (6) i++, go back to (2).
 		}
-		
+		end = System.currentTimeMillis();
+		if (end - start > 100) {
+			long c = end - start;
+		}
 		return policy;
 	}
 	

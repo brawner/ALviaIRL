@@ -33,9 +33,10 @@ public class MacroGridWorld extends GridWorldDomain{
 	public static final int								MCELL_HEIGHT = 10;
 	public static final int								MCELL_WIDTH = 10;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
-	public static final int								MCELL_FILLED = 2;
+	public static final int								MCELL_FILLED = 4;
 	
-
+	private final int macroCellVerticalCount;
+	private final int macroCellHorizontalCount;
 	
 	public MacroGridWorld() {
 		super(WIDTH, HEIGHT); //default gridworld
@@ -44,6 +45,30 @@ public class MacroGridWorld extends GridWorldDomain{
 		// 30% chance action goes in one of the other 3
 		// directions
 		this.setProbSucceedTransitionDynamics(.7);
+		this.macroCellHorizontalCount = MCELL_WIDTH;
+		this.macroCellVerticalCount = MCELL_HEIGHT;
+	}
+	
+	public MacroGridWorld(int width, int height, int macroCellWidth, int macroCellHeight) {
+		super(width, height);
+		this.macroCellHorizontalCount = macroCellWidth;
+		this.macroCellVerticalCount = macroCellHeight;
+	}
+	
+	public int getWidth() {
+		return this.width;
+	}
+	
+	public int getHeight() {
+		return this.height;
+	}
+	
+	public int getMacroCellVerticalCount() {
+		return this.macroCellVerticalCount;
+	}
+	
+	public int getMacroCellHorizontalCount() {
+		return this.macroCellHorizontalCount;
 	}
 	
 	
@@ -81,12 +106,29 @@ public class MacroGridWorld extends GridWorldDomain{
 		return functions;
 	}
 	
+	public static PropositionalFunction[] getPropositionalFunctions(Domain domain, MacroGridWorld gridWorld) {
+		int macroCellWidth = gridWorld.getWidth() / gridWorld.getMacroCellHorizontalCount();
+		int macroCellHeight = gridWorld.getHeight() / gridWorld.getMacroCellVerticalCount();
+		int count = gridWorld.getMacroCellHorizontalCount() * gridWorld.getMacroCellVerticalCount();
+		PropositionalFunction[] functions = new PropositionalFunction[count];
+		int index = 0;
+		for (int i = 0; i < gridWorld.getMacroCellHorizontalCount(); ++i) {
+			int x = i * macroCellWidth;
+			for (int j = 0; j < gridWorld.getMacroCellVerticalCount(); ++j) {
+				int y = j * macroCellHeight;
+				functions[index] = new InMacroCellPF(domain, x, y, macroCellWidth, macroCellHeight);
+				index++;
+			}
+		}
+		return functions;
+	}
+	
 	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions, int numberFilled) {
 		
 		Random rando = new Random();
 		Double[] mrewards = new Double[functions.length];
-		for (int i = 0; i < MCELL_COUNT; i++) {
-			mrewards[i] = (i < MCELL_FILLED) ? rando.nextDouble() * (MAX_REWARD - MIN_REWARD) + MIN_REWARD : 0;
+		for (int i = 0; i < functions.length; i++) {
+			mrewards[i] = (i < numberFilled) ? rando.nextDouble() * (MAX_REWARD - MIN_REWARD) + MIN_REWARD : 0;
 		}
 	
 		List<Double> rewardList = Arrays.asList(mrewards);

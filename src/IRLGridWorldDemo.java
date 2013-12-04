@@ -170,6 +170,7 @@ public class IRLGridWorldDemo {
 		
 		
 		start = System.currentTimeMillis();
+		
 		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
