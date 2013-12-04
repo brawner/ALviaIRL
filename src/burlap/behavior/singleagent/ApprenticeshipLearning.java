@@ -62,7 +62,7 @@ public class ApprenticeshipLearning {
 	 * @param gamma Discount factor for future expected reward
 	 * @return The Feature Expectations generated (double array that matches the length of the featureMapping)
 	 */
-	private static double[] estimateFeatureExpectation(
+	public static double[] estimateFeatureExpectation(
 			List<EpisodeAnalysis> episodes, PropositionalFunction[] featureFunctions, Double gamma) {
 		double[] featureExpectations = new double[featureFunctions.length];
 		
@@ -212,6 +212,32 @@ public class ApprenticeshipLearning {
 	}
 	
 	/**
+	 * Wrapper for projection method when you only want the policy
+	 * 
+	 * @param domain
+	 * @param planner
+	 * @param featureFunctions
+	 * @param expertEpisodes
+	 * @param gamma
+	 * @param epsilon
+	 * @param maxIterations
+	 * @return
+	 */
+	public static Policy projectionMethod(
+			Domain domain, 
+			OOMDPPlanner planner, 
+			PropositionalFunction[] featureFunctions, 
+			List<EpisodeAnalysis> expertEpisodes, 
+			double gamma, double epsilon, int maxIterations) {
+		
+		List<double[]> featureWeightHistory = new ArrayList<double[]>();
+		List<Double> featureWeightScoreHistory = new ArrayList<Double>();
+		
+		return projectionMethod(domain, planner, featureFunctions,  expertEpisodes, 
+				gamma, epsilon, maxIterations, featureWeightHistory, featureWeightScoreHistory);
+	}
+	
+	/**
 	 * Implements the "projection method" for calculating a policy-tilde with a
 	 * feature expectation within epsilon of an expert's feature expectation.
 	 * As described in:
@@ -236,7 +262,9 @@ public class ApprenticeshipLearning {
 										OOMDPPlanner planner, 
 										PropositionalFunction[] featureFunctions, 
 										List<EpisodeAnalysis> expertEpisodes, 
-										double gamma, double epsilon, int maxIterations) {
+										double gamma, double epsilon, int maxIterations,
+										List<double[]> featureWeightHistory,
+										List<Double> featureWeightScoreHistory) {
 		
 		
 		//Max steps that the apprentice will have to learn
@@ -291,6 +319,9 @@ public class ApprenticeshipLearning {
 			
 			lastProjFE = newProjFE; //don't forget to set the old projection to the new one!
 
+			featureWeightHistory.add(featureWeights.weights);
+			featureWeightScoreHistory.add(featureWeights.score);
+			
 			// (3) if t^(i) <= epsilon, terminate
 			if (featureWeights.getScore() <= epsilon) {
 				return policy;
@@ -414,13 +445,21 @@ public class ApprenticeshipLearning {
 
 		double[] newProjExp = new double[lastProjFE.length];
 		
-		for (int i = 0; i < newProjExp.length; i++) {
-			//mu_bar^(i-2) + (mu^(i-1)-mu_bar^(i-2))*
+		double newProjExpCoefficient_num = 0.0;
+		double newProjExpCoefficient_den = 0.0;
+		//mu_bar^(i-2) + (mu^(i-1)-mu_bar^(i-2))*
 			//((mu^(i-1)-mu_bar^(i-2))*(mu_E-mu_bar^(i-2)))/
 			//((mu^(i-1)-mu_bar^(i-2))*(mu(i-1)-mu_bar^(i-2)))
-			newProjExp[i] = lastProjFE[i] + (lastFE[i]-lastProjFE[i])*
-								((lastFE[i]-lastProjFE[i])*(expertFE[i]-lastProjFE[i]))/
-								((lastFE[i]-lastProjFE[i])*(lastFE[i]-lastProjFE[i]));
+		
+		for (int i = 0; i < newProjExp.length; i++) {
+			newProjExpCoefficient_num += ((lastFE[i]-lastProjFE[i])*(expertFE[i]-lastProjFE[i]));
+			newProjExpCoefficient_den += ((lastFE[i]-lastProjFE[i])*(lastFE[i]-lastProjFE[i]));
+		}
+		
+		double newProjExpCoefficient = newProjExpCoefficient_num/newProjExpCoefficient_den;
+		
+		for (int i = 0; i < newProjExp.length; i++) {
+			newProjExp[i] = lastProjFE[i] + (lastFE[i]-lastProjFE[i])*newProjExpCoefficient;
 		}
 		
 		return newProjExp;
@@ -472,9 +511,11 @@ public class ApprenticeshipLearning {
 		
 		//set the score (t) as the L2 norm of the weight
 		double score = 0;
-		for (double w : weights) score += w*w;
-		score = Math.sqrt(score);
+		for (double w : weights) {
+			score += w*w;
+			}
 		
+		score = Math.sqrt(score);
 		return new FeatureWeights(weights, score);
 	}
 	

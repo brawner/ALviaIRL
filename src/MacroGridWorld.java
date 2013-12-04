@@ -25,15 +25,15 @@ public class MacroGridWorld extends GridWorldDomain{
 	public static final String							PFINMCELL = "inMacrocell";
 	public static final String							PFINREWARDMCELL = "inRewardingMacrocell";
 	public static final String							ATTSTEPS = "agentstepsattribute";
-	public static final int								MIN_REWARD = 1;
+	public static final int								MIN_REWARD = 10;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 20;
-	public static final int								WIDTH = 20;
+	public static final int								HEIGHT = 40;
+	public static final int								WIDTH = 40;
 	
-	public static final int								MCELL_HEIGHT = 10;
-	public static final int								MCELL_WIDTH = 10;
+	public static final int								MCELL_HEIGHT = 8;
+	public static final int								MCELL_WIDTH = 8;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
-	public static final int								MCELL_FILLED = 2;
+	public static final int								MCELL_FILLED = 5;
 	
 
 	
@@ -120,8 +120,42 @@ public class MacroGridWorld extends GridWorldDomain{
 	}
 	
 	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions, int numberFilled) {
-		
+				
 		Random rando = new Random();
+		//reward function generation algorithm from Ng et al
+		double[] weights = new double[functions.length];
+		int numFilled = 0;
+		while (numFilled < 2) {
+			numFilled = 0;
+			for (int i = 0; i < functions.length; i++) {
+				if (rando.nextDouble() > .9) {
+					weights[i] = rando.nextDouble();
+					numFilled+=1;
+				}
+				else {
+					weights[i] = 0.0;
+				}
+			}
+		}
+		//dont forget to renormalize
+		double norm = 0.0;
+		for (double w : weights) {
+			norm += w*w;
+		}
+		norm = Math.sqrt(norm);
+		for (int i = 0; i < functions.length; i++) {
+			weights[i] = weights[i]/norm;
+		}
+		
+		Map<String, Double> rewards = new HashMap<String, Double>();
+		
+		for (int i = 0; i < functions.length; i++) {
+			rewards.put(functions[i].getName(), weights[i]);
+			System.out.println(functions[i].getName() + " reward: " + weights[i]);
+		}
+		return rewards;
+		
+		/* old reward generation algorithm
 		Double[] mrewards = new Double[functions.length];
 		for (int i = 0; i < MCELL_COUNT; i++) {
 			mrewards[i] = (i < MCELL_FILLED) ? rando.nextDouble() * (MAX_REWARD - MIN_REWARD) + MIN_REWARD : 0;
@@ -136,6 +170,7 @@ public class MacroGridWorld extends GridWorldDomain{
 			System.out.println(functions[i].getName() + " reward: " + rewardList.get(i));
 		}
 		return rewards;
+		*/
 	}
 
 	public static class InMacroCellPF extends PropositionalFunction{
