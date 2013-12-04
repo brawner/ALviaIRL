@@ -45,7 +45,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> expertEpisodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < N_EXPERT_FE_SAMPLES; i++) {
-			MacroGridWorld.setAgent(initialState, (int)(Math.random()*MacroGridWorld.WIDTH), (int)(Math.random()*MacroGridWorld.HEIGHT));
+			//MacroGridWorld.setAgent(initialState, (int)(Math.random()*MacroGridWorld.WIDTH), (int)(Math.random()*MacroGridWorld.HEIGHT));
 			EpisodeAnalysis episode = expertPolicy.evaluateBehavior(initialState, randomReward, tf,100);
 			expertEpisodes.add(episode);
 			episode.writeToFile(outputPath +"/traj/"+ "Expert_"+i, sp);
@@ -58,11 +58,31 @@ public class TestConvergence extends IRLGridWorldDemo{
 		//	Run experiment
 		//
 		
-		double [][] results = new double[maxIterations][nRuns];
+		double [] results = new double[maxIterations];
 		long start = System.currentTimeMillis();
+		
+		for (int run = 0; run < nRuns; run++) {
+			double[] featureWeightScoreHistory = new double[maxIterations];
+			
+			Policy projPolicy = 
+					ApprenticeshipLearning.projectionMethod(
+							this.domain, planner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxIterations, 
+							ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
+			List<EpisodeAnalysis> apprenticeEpisodes = new ArrayList<EpisodeAnalysis>();
+			for (int i = 0; i < maxIterations; ++i) {
+				results[i] += featureWeightScoreHistory[i]*(1-GAMMA);
+				}
+			System.out.print(run+", ");
+		}
+		for (int i = 0; i < maxIterations; ++i) {
+			results[i] /= nRuns;
+		}
+		
+		/*
 		for (int maxi = 0; maxi < maxIterations; maxi++) {
 			//run n i-length iterations
 			System.out.print("iteration: " + maxi + ", run: ");
+			
 			for (int run = 0; run < nRuns; run++) {
 				double[] featureWeightScoreHistory = new double[maxi];
 				
@@ -79,7 +99,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 					projectionEpisode.writeToFile(outputPath +"/traj/"+ "Projection_"+maxi+"_"+run+"_"+s, sp);
 				}*/
 				//double[] apprenticeFExp = ApprenticeshipLearning.estimateFeatureExpectation(apprenticeEpisodes, featureFunctions, GAMMA);
-				
+				/*
 				if (featureWeightScoreHistory.length > 0) {
 					results[maxi][run] = featureWeightScoreHistory[featureWeightScoreHistory.length -1]*(1-GAMMA);
 						//euclideanDist(apprenticeFExp, expertFExp, true);
@@ -93,7 +113,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 			}
 			System.out.println(" time: " +(System.currentTimeMillis()-start));
 			start = System.currentTimeMillis();
-		}
+		}*/
 		
 		//Write results to file
 		File f = (new File(outputPath+"/"));
@@ -105,13 +125,14 @@ public class TestConvergence extends IRLGridWorldDemo{
 			StringBuilder sb = new StringBuilder();
 			
 			for (int i = 0; i < results.length; i++) {
-				double[] maxi = results[i];
+				//double[] maxi = results[i];
 				sb.append("maxi_"+(i));
-				sb.append(",");
-				for (double run : maxi) {
-					sb.append(run);
-					sb.append(",");
-				}
+				sb.append(", ");
+				//for (double run : maxi) {
+				//	sb.append(run);
+				//	sb.append(",");
+				//}
+				sb.append(results[i]);
 				sb.append("\n");
 			}
 			br.write(sb.toString());
@@ -142,7 +163,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 	public static void main(String [] args) {
 		TestConvergence tester = new TestConvergence();
 		String outputPath = "distVsIterations"; //directory to record results
-		tester.euclideanDistVsIterations(20, 2, outputPath);
+		tester.euclideanDistVsIterations(30, 5, outputPath);
 		//tester.visualizeEpisode(outputPath+"/traj/");
 	}
 }

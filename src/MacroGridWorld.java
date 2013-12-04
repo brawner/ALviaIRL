@@ -88,6 +88,16 @@ public class MacroGridWorld extends GridWorldDomain{
 		s.addObject(new ObjectInstance(d.getObjectClass(CLASSAGENT), CLASSAGENT+0));
 		return s;
 	}
+	
+	public State getRandomInitialState(Domain d) {
+		Random r = new Random();
+		State s = new State();
+		ObjectInstance agent = new ObjectInstance(d.getObjectClass(CLASSAGENT), CLASSAGENT+0);
+		agent.setValue(ATTX, r.nextInt(WIDTH));
+		agent.setValue(ATTY, r.nextInt(HEIGHT));
+		s.addObject(agent);
+		return s;
+	}
 
 	public static PropositionalFunction[] getPropositionalFunctions(Domain domain) {
 		int width = MacroGridWorld.WIDTH / MacroGridWorld.MCELL_WIDTH;

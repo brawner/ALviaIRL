@@ -130,6 +130,7 @@ public class ApprenticeshipLearning {
 	}
 	
 	
+	
 	/**
 	 * Method which implements high level algorithm provided section 3 of
 	 * Abbeel, Peter and Ng, Andrew. "Apprenticeship Learning via Inverse Reinforcement Learning"
@@ -610,7 +611,7 @@ public class ApprenticeshipLearning {
 	 * @return
 	 */
 	private static FeatureWeights getWeightsProjectionMethod(double[] expertFE, double[] newProjFE){
-	
+		
 		//set the weight as the expert's feature expectation minus the new projection
 		double[] weights = new double[newProjFE.length];
 		for (int i = 0; i < weights.length; i++) {
