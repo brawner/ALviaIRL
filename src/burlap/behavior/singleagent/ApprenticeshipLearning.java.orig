@@ -247,8 +247,6 @@ public class ApprenticeshipLearning {
 	 * @param maxIterations
 	 * @return
 	 */
-	
-	/*
 	public static Policy projectionMethod(
 			Domain domain, 
 			OOMDPPlanner planner, 
@@ -262,7 +260,6 @@ public class ApprenticeshipLearning {
 		return projectionMethod(domain, planner, featureFunctions,  expertEpisodes, 
 				gamma, epsilon, maxIterations, featureWeightHistory, featureWeightScoreHistory);
 	}
-	*/
 	
 	/**
 	 * Implements the "projection method" for calculating a policy-tilde with a
@@ -289,6 +286,7 @@ public class ApprenticeshipLearning {
 										OOMDPPlanner planner, 
 										PropositionalFunction[] featureFunctions, 
 										List<EpisodeAnalysis> expertEpisodes, 
+<<<<<<< HEAD
 										double gamma, double epsilon, int maxIterations) {
 		return ApprenticeshipLearning.projectionMethod(domain, planner, featureFunctions, expertEpisodes, gamma, epsilon, maxIterations, FEATURE_EXPECTATION_SAMPLES, new double[maxIterations]);
 	}
@@ -347,8 +345,14 @@ public class ApprenticeshipLearning {
 										OOMDPPlanner planner, 
 										PropositionalFunction[] featureFunctions, 
 										List<EpisodeAnalysis> expertEpisodes, 
-										double gamma, double epsilon, int maxIterations, int policyCount, double[] tHistory ) {
+										double gamma, double epsilon, int maxIterations, int policyCount, double[] tHistory) {
 		long start = System.currentTimeMillis();
+=======
+										double gamma, double epsilon, int maxIterations,
+										List<double[]> featureWeightHistory,
+										List<Double> featureWeightScoreHistory) {
+		
+>>>>>>> faba6f8a197d01192ab12ad94a5915a5bfd5f873
 		
 		//Max steps that the apprentice will have to learn
 		int maximumExpertEpisodeLength = 0;
@@ -426,6 +430,8 @@ public class ApprenticeshipLearning {
 			tHistory[i] = featureWeights.getScore();
 			lastProjFE = newProjFE; //don't forget to set the old projection to the new one!
 
+			featureWeightHistory.add(featureWeights.weights);
+			featureWeightScoreHistory.add(featureWeights.score);
 			
 			// (3) if t^(i) <= epsilon, terminate
 			if (featureWeights.getScore() <= epsilon) {

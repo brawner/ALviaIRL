@@ -33,7 +33,11 @@ public class MacroGridWorld extends GridWorldDomain{
 	public static final int								MCELL_HEIGHT = 8;
 	public static final int								MCELL_WIDTH = 8;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
+<<<<<<< HEAD
+	public static final int								MCELL_FILLED = 4;
+=======
 	public static final int								MCELL_FILLED = 5;
+>>>>>>> faba6f8a197d01192ab12ad94a5915a5bfd5f873
 	
 	private final int macroCellVerticalCount;
 	private final int macroCellHorizontalCount;

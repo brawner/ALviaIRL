@@ -31,19 +31,21 @@ public class IRLGridWorldDemo {
 	TerminalFunction			tf;
 	State 						initialState;
 	DiscreteStateHashFactory	hashingFactory;
+	static double				GAMMA = .99;
+	double						FEXP_EPSILON = .01;
 	
 	
 	public IRLGridWorldDemo() {
 		
 		irlgw = new MacroGridWorld(); //create an 11x11 grid world
-		//gwdg.setProbSucceedTransitionDynamics(0.8); //optional to make transition dynamics stochastic
 		domain = irlgw.generateDomain();
 		sp = new GridWorldStateParser(domain); //for writing states to a file
 		
 		
 		//set up the initial state
 		initialState = MacroGridWorld.getOneAgentState(domain);
-		MacroGridWorld.setAgent(initialState, 0, 0);
+		MacroGridWorld.setAgent(initialState, 0,0);
+				//(int)(Math.random()*MacroGridWorld.WIDTH), (int)(Math.random()*MacroGridWorld.HEIGHT));
 		
 		//rf = new IRLGridRF(irlgw.getMacroCellRewards(initialState));
 			
@@ -107,7 +109,7 @@ public class IRLGridWorldDemo {
 		rf = randomReward;
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		ValueIteration planner = new ValueIteration(domain, randomReward, tf, 0.9, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(domain, randomReward, tf, GAMMA, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
 		planner.planFromState(initialState);
@@ -142,7 +144,7 @@ public class IRLGridWorldDemo {
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		ValueIteration planner = new ValueIteration(domain, randomReward, tf, 0.9, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(domain, randomReward, tf, GAMMA, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
 		planner.planFromState(initialState);
@@ -153,6 +155,16 @@ public class IRLGridWorldDemo {
 		this.runALviaIRL(outputPath, planner, featureFunctions, expertEpisodes, randomReward);
 	}
 	
+	/**
+	 * This method runs an example of the ALviaIRL algorithm on grid world 
+	 * 
+	 * @param outputPath
+	 * @param planner
+	 * @param featureFunctions
+	 * @param expertEpisodes
+	 * @param randomReward
+	 */
+	
 	public void runALviaIRL(String outputPath, ValueIteration planner, PropositionalFunction[] featureFunctions, List<EpisodeAnalysis> expertEpisodes, RewardFunction randomReward) {
 		//run a sample of the computed policy and write its results to the file "VIResult.episode" in the directory outputPath
 		//a '.episode' extension is automatically added by the writeToFileMethod
@@ -162,9 +174,9 @@ public class IRLGridWorldDemo {
 		}
 		
 		long start = System.currentTimeMillis();
-		//Policy policy = InverseReinforcementLearning.maxMarginMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
-		//EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
-		//resultEpisode.writeToFile(outputPath + "Result", sp);
+		Policy policy = ApprenticeshipLearning.maxMarginMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
+		resultEpisode.writeToFile(outputPath + "MaxMargin", sp);
 		long end = System.currentTimeMillis();
 		System.out.println("Time to complete: " + (end - start)/1000F);
 		
@@ -186,8 +198,8 @@ public class IRLGridWorldDemo {
 		IRLGridWorldDemo tester = new IRLGridWorldDemo();
 		String outputPath = "output"; //directory to record results
 		
-		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
-		//tester.ValueIterationExample(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		tester.visualizeEpisode(outputPath); //visualizers the policy sample
 
 	}
