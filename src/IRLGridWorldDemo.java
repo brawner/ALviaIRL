@@ -174,14 +174,15 @@ public class IRLGridWorldDemo {
 		}
 		
 		long start = System.currentTimeMillis();
-		//Policy policy = InverseReinforcementLearning.maxMarginMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
-		//EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
-		//resultEpisode.writeToFile(outputPath + "Result", sp);
+		Policy policy = ApprenticeshipLearning.maxMarginMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
+		resultEpisode.writeToFile(outputPath + "MaxMargin", sp);
 		long end = System.currentTimeMillis();
 		System.out.println("Time to complete: " + (end - start)/1000F);
 		
 		
 		start = System.currentTimeMillis();
+		
 		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
@@ -197,8 +198,8 @@ public class IRLGridWorldDemo {
 		IRLGridWorldDemo tester = new IRLGridWorldDemo();
 		String outputPath = "output"; //directory to record results
 		
-		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
-		//tester.ValueIterationExample(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		tester.visualizeEpisode(outputPath); //visualizers the policy sample
 
 	}
