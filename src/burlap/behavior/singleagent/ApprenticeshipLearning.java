@@ -111,12 +111,13 @@ public class ApprenticeshipLearning {
 	}
 	
 	/**
+	 * OLD VERSION
 	 * Checks and returns initial state if all expert episodes share the same starting state
 	 * 
 	 * @param episodes A list of expert demonstrated episodes
 	 * @return The initial state shared by all policies, null if there are multiple initial states
 	 */
-	public static State getInitialState(List<EpisodeAnalysis> episodes) {
+	/*public static State getInitialState(List<EpisodeAnalysis> episodes) {
 		if (episodes.size() > 0 && episodes.get(0).numTimeSteps() > 0) {
 			State state = episodes.get(0).getState(0);
 			for (int i = 1; i < episodes.size(); ++i) {
@@ -127,6 +128,16 @@ public class ApprenticeshipLearning {
 			return state;
 		}
 		return null;
+	}*/
+	/**
+	 * Returns the initial state of a randomly chosen episode analysis
+	 * @param episodes
+	 * @return
+	 */
+	public static State getInitialState(List<EpisodeAnalysis> episodes) {
+		Random rando = new Random();
+		EpisodeAnalysis randomEpisodeAnalysis = episodes.get(rando.nextInt(episodes.size()));
+		return randomEpisodeAnalysis.getState(0);
 	}
 	
 	

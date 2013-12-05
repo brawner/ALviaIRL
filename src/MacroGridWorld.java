@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Random;
 
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
+import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
@@ -89,7 +90,7 @@ public class MacroGridWorld extends GridWorldDomain{
 		return s;
 	}
 	
-	public State getRandomInitialState(Domain d) {
+	public static State getRandomInitialState(Domain d) {
 		Random r = new Random();
 		State s = new State();
 		ObjectInstance agent = new ObjectInstance(d.getObjectClass(CLASSAGENT), CLASSAGENT+0);
@@ -187,6 +188,7 @@ public class MacroGridWorld extends GridWorldDomain{
 		*/
 	}
 
+	
 	public static class InMacroCellPF extends PropositionalFunction{
 		private int left, right, top, bottom;
 		

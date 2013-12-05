@@ -1,0 +1,498 @@
+#EL#
+0 11
+#ES#
+north
+0.0
+#EL#
+0 12
+#ES#
+north
+0.0
+#EL#
+0 13
+#ES#
+north
+0.0
+#EL#
+0 14
+#ES#
+east
+0.0
+#EL#
+0 13
+#ES#
+north
+0.0
+#EL#
+0 14
+#ES#
+east
+0.0
+#EL#
+1 14
+#ES#
+east
+0.0
+#EL#
+2 14
+#ES#
+east
+0.0
+#EL#
+3 14
+#ES#
+east
+0.0
+#EL#
+4 14
+#ES#
+east
+0.0
+#EL#
+5 14
+#ES#
+east
+0.0
+#EL#
+6 14
+#ES#
+north
+0.0
+#EL#
+5 14
+#ES#
+east
+0.0
+#EL#
+6 14
+#ES#
+north
+0.0
+#EL#
+6 15
+#ES#
+north
+0.0
+#EL#
+6 16
+#ES#
+east
+0.0
+#EL#
+7 16
+#ES#
+east
+0.0
+#EL#
+7 15
+#ES#
+north
+0.0
+#EL#
+6 15
+#ES#
+north
+0.0
+#EL#
+6 14
+#ES#
+north
+0.0
+#EL#
+5 14
+#ES#
+east
+0.0
+#EL#
+6 14
+#ES#
+north
+0.0
+#EL#
+6 13
+#ES#
+east
+0.0
+#EL#
+7 13
+#ES#
+east
+0.0
+#EL#
+8 13
+#ES#
+east
+0.0
+#EL#
+9 13
+#ES#
+east
+0.0
+#EL#
+10 13
+#ES#
+east
+0.0
+#EL#
+11 13
+#ES#
+east
+0.0
+#EL#
+12 13
+#ES#
+east
+0.0
+#EL#
+12 14
+#ES#
+north
+0.0
+#EL#
+13 14
+#ES#
+north
+0.0
+#EL#
+13 13
+#ES#
+east
+0.0
+#EL#
+14 13
+#ES#
+north
+0.0
+#EL#
+15 13
+#ES#
+east
+0.0
+#EL#
+16 13
+#ES#
+north
+0.0
+#EL#
+17 13
+#ES#
+north
+0.0
+#EL#
+18 13
+#ES#
+north
+0.0
+#EL#
+18 14
+#ES#
+north
+0.0
+#EL#
+17 14
+#ES#
+north
+0.0
+#EL#
+16 14
+#ES#
+east
+0.0
+#EL#
+17 14
+#ES#
+north
+0.0
+#EL#
+17 15
+#ES#
+north
+0.0
+#EL#
+16 15
+#ES#
+north
+0.0
+#EL#
+16 16
+#ES#
+east
+0.0
+#EL#
+17 16
+#ES#
+north
+0.0
+#EL#
+17 17
+#ES#
+north
+0.0
+#EL#
+16 17
+#ES#
+north
+0.0
+#EL#
+16 16
+#ES#
+east
+0.0
+#EL#
+17 16
+#ES#
+north
+0.0
+#EL#
+17 17
+#ES#
+north
+0.0
+#EL#
+17 18
+#ES#
+north
+0.0
+#EL#
+17 17
+#ES#
+north
+0.0
+#EL#
+16 17
+#ES#
+north
+0.0
+#EL#
+16 18
+#ES#
+east
+0.0
+#EL#
+17 18
+#ES#
+north
+0.0
+#EL#
+17 19
+#ES#
+east
+0.0
+#EL#
+17 18
+#ES#
+north
+0.0
+#EL#
+16 18
+#ES#
+east
+0.0
+#EL#
+16 19
+#ES#
+east
+0.0
+#EL#
+15 19
+#ES#
+east
+0.0
+#EL#
+15 18
+#ES#
+east
+0.0
+#EL#
+16 18
+#ES#
+east
+0.0
+#EL#
+17 18
+#ES#
+north
+0.0
+#EL#
+18 18
+#ES#
+north
+0.0
+#EL#
+18 19
+#ES#
+east
+0.0
+#EL#
+19 19
+#ES#
+east
+0.0
+#EL#
+18 19
+#ES#
+east
+0.0
+#EL#
+19 19
+#ES#
+east
+0.0
+#EL#
+19 20
+#ES#
+east
+0.0
+#EL#
+20 20
+#ES#
+north
+0.43077452580665265
+#EL#
+20 21
+#ES#
+north
+0.43077452580665265
+#EL#
+20 22
+#ES#
+east
+0.43077452580665265
+#EL#
+21 22
+#ES#
+east
+0.43077452580665265
+#EL#
+21 21
+#ES#
+north
+0.43077452580665265
+#EL#
+22 21
+#ES#
+north
+0.43077452580665265
+#EL#
+22 22
+#ES#
+east
+0.43077452580665265
+#EL#
+22 21
+#ES#
+north
+0.43077452580665265
+#EL#
+22 22
+#ES#
+east
+0.43077452580665265
+#EL#
+23 22
+#ES#
+north
+0.43077452580665265
+#EL#
+23 21
+#ES#
+north
+0.43077452580665265
+#EL#
+23 22
+#ES#
+north
+0.43077452580665265
+#EL#
+23 23
+#ES#
+north
+0.43077452580665265
+#EL#
+23 22
+#ES#
+north
+0.43077452580665265
+#EL#
+23 23
+#ES#
+north
+0.43077452580665265
+#EL#
+23 24
+#ES#
+east
+0.43077452580665265
+#EL#
+23 25
+#ES#
+east
+0.43077452580665265
+#EL#
+23 26
+#ES#
+east
+0.0
+#EL#
+24 26
+#ES#
+north
+0.0
+#EL#
+24 27
+#ES#
+north
+0.0
+#EL#
+24 28
+#ES#
+north
+0.0
+#EL#
+24 29
+#ES#
+north
+0.0
+#EL#
+24 30
+#ES#
+north
+0.0
+#EL#
+24 31
+#ES#
+north
+0.0
+#EL#
+24 32
+#ES#
+north
+0.0
+#EL#
+23 32
+#ES#
+north
+0.0
+#EL#
+23 31
+#ES#
+north
+0.0
+#EL#
+23 32
+#ES#
+north
+0.0
+#EL#
+24 32
+#ES#
+north
+0.0
+#EL#
+24 33
+#ES#
+north
+0.0
+#EL#
+25 33
+#ES#
