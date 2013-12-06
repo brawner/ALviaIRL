@@ -211,6 +211,11 @@ public class MacroGridWorld extends GridWorldDomain{
 					bottom <= agentY && agentY <= top);
 				
 		}
+		
+		public boolean isTrue(int agentX, int agentY) {
+			return (left <= agentX && agentX < right &&
+					bottom <= agentY && agentY < top);
+		}
 	}
 	
 

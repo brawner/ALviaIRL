@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import burlap.behavior.singleagent.ApprenticeshipLearning;
 import burlap.behavior.singleagent.EpisodeAnalysis;
@@ -31,6 +32,8 @@ public class IRLGridWorldDemo {
 	TerminalFunction			tf;
 	State 						initialState;
 	DiscreteStateHashFactory	hashingFactory;
+	PropositionalFunction[]		featureFunctions;
+	Map<String, Double>			rewardMap;
 	static double				GAMMA = .99;
 	double						FEXP_EPSILON = .01;
 	
@@ -86,7 +89,13 @@ public class IRLGridWorldDemo {
 	 * @param outputPath the path to the directory containing the saved episode files
 	 */
 	public void visualizeEpisode(String outputPath){
-		Visualizer v = GridWorldVisualizer.getVisualizer(domain, irlgw.getMap());
+		MacroGridWorld.InMacroCellPF[] macroCellFunctions = new MacroGridWorld.InMacroCellPF[this.featureFunctions.length];
+		for (int i =0; i < this.featureFunctions.length; i++) {
+			macroCellFunctions[i] = (MacroGridWorld.InMacroCellPF)this.featureFunctions[i];
+		}
+		
+		
+		Visualizer v = MacroCellVisualizer.getVisualizer(domain, irlgw.getMap(), macroCellFunctions, this.rewardMap);
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, outputPath);
 	}
 	
@@ -103,9 +112,9 @@ public class IRLGridWorldDemo {
 			outputPath = outputPath + "/";
 		}
 		
-		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
-		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
+		this.featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
+		this.rewardMap = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, this.rewardMap);
 		rf = randomReward;
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
@@ -174,16 +183,16 @@ public class IRLGridWorldDemo {
 		}
 		
 		long start = System.currentTimeMillis();
-		Policy policy = ApprenticeshipLearning.maxMarginMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
-		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
-		resultEpisode.writeToFile(outputPath + "MaxMargin", sp);
+		//Policy policy = ApprenticeshipLearning.maxMarginMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
+		//EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, tf, 100);
+		//resultEpisode.writeToFile(outputPath + "MaxMargin", sp);
 		long end = System.currentTimeMillis();
 		System.out.println("Time to complete: " + (end - start)/1000F);
 		
 		
 		start = System.currentTimeMillis();
 		
-		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
+		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.99, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
 		end = System.currentTimeMillis();
@@ -198,8 +207,8 @@ public class IRLGridWorldDemo {
 		IRLGridWorldDemo tester = new IRLGridWorldDemo();
 		String outputPath = "output"; //directory to record results
 		
-		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
-		tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		//tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		tester.visualizeEpisode(outputPath); //visualizers the policy sample
 
 	}
