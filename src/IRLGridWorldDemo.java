@@ -40,7 +40,7 @@ public class IRLGridWorldDemo {
 	PropositionalFunction[]		featureFunctions;
 	Map<String, Double>			rewardMap;
 	static double				GAMMA = .99;
-	double						FEXP_EPSILON = .01;
+	double						FEXP_EPSILON = .001;
 	RandomStartStateGenerator	startStateGenerator;
 	
 	public IRLGridWorldDemo() {
@@ -53,8 +53,7 @@ public class IRLGridWorldDemo {
 		//set up the initial state
 		initialState = MacroGridWorld.getOneAgentState(domain);
 		MacroGridWorld.setAgent(initialState, 0,0);
-		this.startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
-				//(int)(Math.random()*MacroGridWorld.WIDTH), (int)(Math.random()*MacroGridWorld.HEIGHT));
+		this.startStateGenerator = new RandomStartStateGenerator((SADomain)domain, initialState);
 		
 		//rf = new IRLGridRF(irlgw.getMacroCellRewards(initialState));
 			
@@ -223,8 +222,8 @@ public class IRLGridWorldDemo {
 		String outputPath = "output"; //directory to record results
 		
 		
-		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
-		//tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		
 		/*
 		Policy policy = new ExpertPolicy(20, 20, tester.domain.getAction(GridWorldDomain.ACTIONNORTH),
