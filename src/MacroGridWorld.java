@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import burlap.behavior.singleagent.RandomInitialStateDomain;
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
 import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Attribute;
@@ -204,12 +203,6 @@ public class MacroGridWorld extends GridWorldDomain{
 		public boolean isTrue(int agentX, int agentY) {
 			return (left <= agentX && agentX < right &&
 					bottom <= agentY && agentY < top);
-		}
-	}
-	
-	public static class MGWRandomInitialState implements RandomInitialStateDomain {
-		public State getRandomInitialState(Domain d) {
-			return MacroGridWorld.getRandomInitialState(d);
 		}
 	}
 }

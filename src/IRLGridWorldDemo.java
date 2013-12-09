@@ -8,11 +8,7 @@ import burlap.behavior.singleagent.ApprenticeshipLearningRequest;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
-<<<<<<< HEAD
-import burlap.behavior.singleagent.RandomInitialStateDomain;
-=======
 import burlap.behavior.singleagent.RandomStartStateGenerator;
->>>>>>> 6f639cc3ff5d8f0c8378f702d8a9df363b67e190
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
@@ -45,7 +41,7 @@ public class IRLGridWorldDemo {
 	Map<String, Double>			rewardMap;
 	static double				GAMMA = .99;
 	double						FEXP_EPSILON = .001;
-	RandomInitialStateDomain	startStateGenerator;
+	RandomStartStateGenerator	startStateGenerator;
 	
 	public IRLGridWorldDemo() {
 		
@@ -57,7 +53,7 @@ public class IRLGridWorldDemo {
 		//set up the initial state
 		initialState = MacroGridWorld.getOneAgentState(domain);
 		MacroGridWorld.setAgent(initialState, 0,0);
-		this.startStateGenerator = new MacroGridWorld.MGWRandomInitialState();
+		this.startStateGenerator = new RandomStartStateGenerator((SADomain)domain, initialState);
 		
 		//rf = new IRLGridRF(irlgw.getMacroCellRewards(initialState));
 			
@@ -144,7 +140,7 @@ public class IRLGridWorldDemo {
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < 10; ++i) {
-			EpisodeAnalysis episode = p.evaluateBehavior(this.startStateGenerator.getRandomInitialState(domain), randomReward, tf,100);
+			EpisodeAnalysis episode = p.evaluateBehavior(this.startStateGenerator.generateState(), randomReward, tf,100);
 			episodes.add(episode);
 		}
 		

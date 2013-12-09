@@ -88,25 +88,13 @@ public class TestConvergence extends IRLGridWorldDemo{
 		request.setMaxIterations(maxIterations);
 		request.setPolicyCount(ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES);
 		
-		for (int run = 0; run < nRuns; run++) {
-<<<<<<< HEAD
-			ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
-			apprenticePlanner.toggleDebugPrinting(false);
+		for (int run = 0; run < nRuns; run++) {			
+			Policy projPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 			
-			double[] featureWeightScoreHistory = new double[maxIterations];
-			
-			Policy projPolicy = 
-					ApprenticeshipLearning.projectionMethod(
-							this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxIterations, 
-							ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
 			EpisodeAnalysis apprenticeEA = projPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
 			apprenticeEA.writeToFile(outputPath +"/traj/"+ "ApprenticeSample_run"+run, sp);
 
-=======
-			Policy projPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 			double[] featureWeightScoreHistory = request.getTHistory();
->>>>>>> 6f639cc3ff5d8f0c8378f702d8a9df363b67e190
-			List<EpisodeAnalysis> apprenticeEpisodes = new ArrayList<EpisodeAnalysis>();
 			for (int i = 0; i < maxIterations; ++i) {
 				featureWeightScoreHistory[i] *= (1-GAMMA);
 				}
@@ -119,7 +107,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 	}
 	
-	public void euclideanDistVsIterationsIndependent(int maxIterations, int nRuns, String outputPath){
+	/*public void euclideanDistVsIterationsIndependent(int maxIterations, int nRuns, String outputPath){
 		//0 - generate a random reward funciton on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
 		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
@@ -197,7 +185,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		//Write results to file
 		writeResultsToFile(results, outputPath, "performanceToIterations_independent.csv");
 		
-	}
+	}*/
 	
 	public void performanceToExpertSampleSize(int [] sampleSizes, int nRuns, String outputPath, String algorithm){
 		//0 - generate a random reward funciton on the gridworld
