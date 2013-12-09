@@ -69,7 +69,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 		Domain domain = super.generateDomain();
 		
 		ObjectClass block = new ObjectClass(domain, DrivingGridWorld.blockClass);
-		
+		domain.
 		//new block actions
 		
 		Action blockmove = new MovementAction(DrivingGridWorld.ACTIONBLOCKMOVE, domain, this.transitionDynamics[0]);
