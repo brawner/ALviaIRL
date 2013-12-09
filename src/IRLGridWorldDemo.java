@@ -20,6 +20,8 @@ import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.singleagent.explorer.VisualExplorerRecorder;
 import burlap.oomdp.visualizer.Visualizer;
 
@@ -88,7 +90,7 @@ public class IRLGridWorldDemo {
 	 * launch an episode viewer for episodes saved to files .
 	 * @param outputPath the path to the directory containing the saved episode files
 	 */
-	public void visualizeEpisode(String outputPath){
+	public void visualizeEpisodeWithFeatures(String outputPath){
 		MacroGridWorld.InMacroCellPF[] macroCellFunctions = new MacroGridWorld.InMacroCellPF[this.featureFunctions.length];
 		for (int i =0; i < this.featureFunctions.length; i++) {
 			macroCellFunctions[i] = (MacroGridWorld.InMacroCellPF)this.featureFunctions[i];
@@ -96,6 +98,11 @@ public class IRLGridWorldDemo {
 		
 		
 		Visualizer v = MacroCellVisualizer.getVisualizer(domain, irlgw.getMap(), macroCellFunctions, this.rewardMap);
+		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, outputPath);
+	}
+	
+	public void visualizeEpisode(String outputPath) {
+		Visualizer v = GridWorldVisualizer.getVisualizer(domain, irlgw.getMap());
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, sp, outputPath);
 	}
 	
@@ -207,8 +214,23 @@ public class IRLGridWorldDemo {
 		IRLGridWorldDemo tester = new IRLGridWorldDemo();
 		String outputPath = "output"; //directory to record results
 		
-		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
 		//tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		
+		
+		Policy policy = new ExpertPolicy(20, 20, tester.domain.getAction(GridWorldDomain.ACTIONNORTH),
+				tester.domain.getAction(GridWorldDomain.ACTIONSOUTH),
+				tester.domain.getAction(GridWorldDomain.ACTIONWEST),
+				tester.domain.getAction(GridWorldDomain.ACTIONEAST));
+		RandomStartStateGenerator stateGenerator = 
+				new RandomStartStateGenerator((SADomain)tester.domain, tester.initialState);
+		
+		for (int i = 0; i < 10; ++i) {
+			State state = stateGenerator.generateState();
+			EpisodeAnalysis epAnalysis = policy.evaluateBehavior(state, new UniformCostRF(), 50);
+			epAnalysis.writeToFile(outputPath + "/random" + i, tester.sp);
+		}
+		
 		tester.visualizeEpisode(outputPath); //visualizers the policy sample
 
 	}
