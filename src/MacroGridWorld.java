@@ -174,23 +174,6 @@ public class MacroGridWorld extends GridWorldDomain{
 			System.out.println(functions[i].getName() + " reward: " + weights[i]);
 		}
 		return rewards;
-		
-		/* old reward generation algorithm
-		Double[] mrewards = new Double[functions.length];
-		for (int i = 0; i < functions.length; i++) {
-			mrewards[i] = (i < numberFilled) ? rando.nextDouble() * (MAX_REWARD - MIN_REWARD) + MIN_REWARD : 0;
-		}
-	
-		List<Double> rewardList = Arrays.asList(mrewards);
-		Collections.shuffle(rewardList);
-		
-		Map<String, Double> rewards = new HashMap<String, Double>();
-		for (int i = 0; i < functions.length; i++) {
-			rewards.put(functions[i].getName(), rewardList.get(i));
-			System.out.println(functions[i].getName() + " reward: " + rewardList.get(i));
-		}
-		return rewards;
-		*/
 	}
 
 	
@@ -214,13 +197,12 @@ public class MacroGridWorld extends GridWorldDomain{
 			ObjectInstance agent = agents.get(0);
 			int agentX = agent.getDiscValForAttribute(MacroGridWorld.ATTX);
 			int agentY = agent.getDiscValForAttribute(MacroGridWorld.ATTY);
-			return (left <= agentX && agentX < right && 
+			return this.isTrue(agentX, agentY);
+		}
+		
+		public boolean isTrue(int agentX, int agentY) {
+			return (left <= agentX && agentX < right &&
 					bottom <= agentY && agentY < top);
-				
 		}
 	}
-	
-
-	
-	
 }

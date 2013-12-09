@@ -29,8 +29,8 @@ public static Visualizer getVisualizer(Domain d, int [][] map){
 		Visualizer v = new Visualizer();
 		
 		v.addStaticPainter(new MapPainter(d, map));
-		v.addObjectClassPainter(DrivingGridWorld.blockClass, new GridWorldVisualizer.CellPainter(Color.blue, map));
 		v.addObjectClassPainter(GridWorldDomain.CLASSAGENT, new GridWorldVisualizer.CellPainter(Color.red, map));
+		v.addObjectClassPainter(DrivingGridWorld.blockClass, new GridWorldVisualizer.CellPainter(Color.blue, map));
 		
 		return v;
 	}
@@ -40,7 +40,12 @@ public static Visualizer getVisualizer(Domain d, int [][] map){
 		protected int 				dwidth;
 		protected int 				dheight;
 		protected int [][] 			map;
+		int							numLanes;
+		int							laneWidth;
+		int							leftGrassRight;
+		int							rightGrassLeft;
 		
+		//, int leftGrassRight, int rightGrassLeft, int numLanes, int laneWidth
 		public MapPainter(Domain domain, int [][] map) {
 			this.dwidth = map.length;
 			this.dheight = map[0].length;
@@ -59,6 +64,13 @@ public static Visualizer getVisualizer(Domain d, int [][] map){
 			//determine then normalized width
 			float width = (1.0f / domainXScale) * cWidth;
 			float height = (1.0f / domainYScale) * cHeight;
+			
+			for (int i = 0; i < numLanes; ++i) {
+				float rx = i*laneWidth;
+				float ryTop = cHeight - height - this.dheight*height;
+				float ryBottom = cHeight - height;
+			
+			}
 			
 			//pass through each cell of the map and if it is a wall, draw it
 			for(int i = 0; i < this.dwidth; i++){
