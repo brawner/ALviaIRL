@@ -31,7 +31,7 @@ public class ALRequest {
 		this.planner = p;
 	}
 	
-	public OOMDPPLanner getPlanner() {return this.planner;}
+	public OOMDPPlanner getPlanner() {return this.planner;}
 	
 	public void setFeatureFunctions(PropositionalFunction[] functions) {
 		this.featureFunctions= functions.clone();

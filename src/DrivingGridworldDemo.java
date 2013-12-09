@@ -42,7 +42,14 @@ public class DrivingGridworldDemo {
 	public static void runDrivingDemo(String outputPath, int width, int height, int numLanes, int laneWidth ) {
 		DrivingGridWorld gridWorld = new DrivingGridWorld(width, height, numLanes, laneWidth);
 		Domain gridWorldDomain = gridWorld.generateDomain();
-		State initialState = gridWorld.getOneAgentState(gridWorldDomain);
+		
+		int[] xLocations = new int[numLanes];
+		int startX = (width - numLanes * laneWidth) / 2 + laneWidth / 2;
+		for (int i =0; i < numLanes; ++i) {
+			xLocations[i] = startX + i * laneWidth;
+		}
+		
+		State initialState = gridWorld.getOneAgentState(gridWorldDomain, xLocations, height, height);
 		List<EpisodeAnalysis> expertEpisodes = DrivingGridworldDemo.interactive(gridWorldDomain, gridWorld, initialState);
 		
 		//for consistency make sure the path ends with a '/'
