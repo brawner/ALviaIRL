@@ -15,6 +15,7 @@ import burlap.domain.singleagent.gridworld.GridWorldDomain.MovementAction;
 import burlap.domain.singleagent.gridworld.GridWorldDomain.WallToPF;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer.CellPainter;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer.MapPainter;
+import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
@@ -28,12 +29,15 @@ import burlap.oomdp.singleagent.explorer.VisualExplorerRecorder;
 import burlap.oomdp.visualizer.Visualizer;
 
 
-public class DrivingGridWorld extends GridWorldDomain {
+public class DrivingGridWorld extends GridWorldDomain{
 	public static final String agentClass = "agent";
 	public static final String blockClass = "block";
 	private int leftGrassRight;
 	private int rightGrassLeft;
+	private int[] blockXLocations;
+	private int blockCount;
 	public static final String ACTIONBLOCKMOVE = "moveblock";
+	public static final String ACTIONWAIT = "wait";
 	
 	private int laneCount;
 	private int laneWidth;
@@ -57,7 +61,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 		this.laneCount = numLanes;
 		this.map = new int[width][height];
 		int roadWidth = numLanes * laneWidth;
-		this.leftGrassRight = width - roadWidth;
+		this.leftGrassRight = (width - roadWidth)/2;
 		this.rightGrassLeft = this.leftGrassRight + roadWidth;
 		
 		for (int i = 0; i < width; ++i) {
@@ -74,8 +78,24 @@ public class DrivingGridWorld extends GridWorldDomain {
 		}
 	}
 
+	public void setDeterministicTransitionDynamicsWithWait(){
+		int na = 5;
+		transitionDynamics = new double[na][na];
+		for(int i = 0; i < na; i++){
+			for(int j = 0; j < na; j++){
+				if(i != j){
+					transitionDynamics[i][j] = 0.;
+				}
+				else{
+					transitionDynamics[i][j] = 1.;
+				}
+			}
+		}
+	}
+	
 	@Override
 	public Domain generateDomain() {
+		
 		Domain domain= new SADomain();
 		
 		//Creates a new Attribute object
@@ -101,20 +121,13 @@ public class DrivingGridWorld extends GridWorldDomain {
 		Action south = new DrivingAction(ACTIONSOUTH, domain, this.transitionDynamics[1], this.height);
 		Action east = new DrivingAction(ACTIONEAST, domain, this.transitionDynamics[2], this.height);
 		Action west = new DrivingAction(ACTIONWEST, domain, this.transitionDynamics[3], this.height);
-		
-		
-		PropositionalFunction atLocationPF = new AtLocationPF(PFATLOCATION, domain, new String[]{CLASSAGENT, CLASSLOCATION});
-		
-		PropositionalFunction wallToNorthPF = new WallToPF(PFWALLNORTH, domain, new String[]{CLASSAGENT}, 0);
-		PropositionalFunction wallToSouthPF = new WallToPF(PFWALLSOUTH, domain, new String[]{CLASSAGENT}, 1);
-		PropositionalFunction wallToEastPF = new WallToPF(PFWALLEAST, domain, new String[]{CLASSAGENT}, 2);
-		PropositionalFunction wallToWestPF = new WallToPF(PFWALLWEST, domain, new String[]{CLASSAGENT}, 3);
+		Action wait = new WaitAction(ACTIONWAIT, domain, this.height );
 		
 		PropositionalFunction[] functions = DrivingGridWorld.getFeatureFunctions(domain, this);
 
 		//new block actions
 		
-		Action blockmove = new MovementAction(DrivingGridWorld.ACTIONBLOCKMOVE, domain, this.transitionDynamics[0]);
+		//Action blockmove = new MovementAction(DrivingGridWorld.ACTIONBLOCKMOVE, domain, this.transitionDynamics[0]);
 
 		return domain;
 	}
@@ -143,6 +156,26 @@ public class DrivingGridWorld extends GridWorldDomain {
 		return s;
 	}
 	
+	
+	
+	
+	public static State getOneAgentNLocationState(Domain domain, int blockCount) {
+		State s = new State();
+		ObjectInstance agent = new ObjectInstance(domain.getObjectClass(DrivingGridWorld.agentClass), agentClass+0);
+		s.addObject(agent);
+		for (int i = 0; i < blockCount; ++i) {
+			s.addObject(new ObjectInstance(domain.getObjectClass(DrivingGridWorld.blockClass), blockClass+i));
+		}
+		return s;
+	}
+	
+	public static void setBlockLocation(State s, int i, int x, int y){
+		List<ObjectInstance> objects = s.getObjectsOfTrueClass(DrivingGridWorld.blockClass);
+		ObjectInstance o = s.getObjectsOfTrueClass(DrivingGridWorld.blockClass).get(i);
+		
+		o.setValue(ATTX, x);
+		o.setValue(ATTY, y);
+	}
 	public List<EpisodeAnalysis> interactive(Domain domain, DrivingGridWorld gridWorld, State initialState){
 		Visualizer v = DrivingWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
 		VisualExplorerRecorder exp = new VisualExplorerRecorder(domain, v, initialState);
@@ -151,6 +184,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 		exp.addKeyAction("s", GridWorldDomain.ACTIONSOUTH);
 		exp.addKeyAction("d", GridWorldDomain.ACTIONEAST);
 		exp.addKeyAction("a", GridWorldDomain.ACTIONWEST);
+		
 		
 		
 		List<EpisodeAnalysis> recordedEpisodes = new ArrayList<EpisodeAnalysis>();
@@ -291,7 +325,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 				//}
 				int y = block.getDiscValForAttribute(ATTY);
 				if (y == 0) {
-					block.setValue(ATTY, height);
+					block.setValue(ATTY, height - 1);
 				}
 				else {
 					block.setValue(ATTY, y-1);
@@ -312,13 +346,44 @@ public class DrivingGridWorld extends GridWorldDomain {
 			}
 			
 			int [] dcomps = DrivingGridWorld.this.movementDirectionFromIndex(dir);
+			if (dcomps != null) {
 			DrivingGridWorld.this.move(st, dcomps[0], dcomps[1]);
+			}
 			
 			return st;
 		}
 		
 	}
 
+	public class WaitAction extends Action {
+
+		private int height;
+
+		public WaitAction(String name, Domain domain, int height) {
+			super(name, domain, "");
+			this.height = height;
+		}
+		
+		@Override
+		protected State performActionHelper(State st, String[] params) {
+			
+			//update block locations
+			List<ObjectInstance> blocks = st.getObjectsOfTrueClass(blockClass);
+			for (ObjectInstance block : blocks) {
+
+				int y = block.getDiscValForAttribute(ATTY);
+				if (y == 0) {
+					block.setValue(ATTY, height - 1);
+				}
+				else {
+					block.setValue(ATTY, y-1);
+				}
+			}
+			return st;
+		}
+		
+	}
+	
 	public static Map<String, Double> generateRewards(PropositionalFunction[] featureFunctions) {
 		// TODO need to generate a mapping between the feature propositional functions
 		// TODO feel free to change the declaration or add different version of reward mappings
