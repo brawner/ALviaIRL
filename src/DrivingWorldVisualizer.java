@@ -24,7 +24,7 @@ public class DrivingWorldVisualizer extends GridWorldVisualizer {
 		// TODO Auto-generated constructor stub
 	}
 
-public static Visualizer getVisualizer(Domain d, int [][] map){
+public static Visualizer getVisualizer(Domain d, int [][] map, int leftGrassRight, int rightGrassLeft, int numLanes, int laneWidth){
 		
 		Visualizer v = new Visualizer();
 		
@@ -40,8 +40,13 @@ public static Visualizer getVisualizer(Domain d, int [][] map){
 		protected int 				dwidth;
 		protected int 				dheight;
 		protected int [][] 			map;
+		int							numLanes;
+		int							laneWidth;
+		int							leftGrassRight;
+		int							rightGrassLeft;
 		
-		public MapPainter(Domain domain, int [][] map) {
+		
+		public MapPainter(Domain domain, int [][] map, int leftGrassRight, int rightGrassLeft, int numLanes, int laneWidth) {
 			this.dwidth = map.length;
 			this.dheight = map[0].length;
 			this.map = map;
@@ -59,6 +64,13 @@ public static Visualizer getVisualizer(Domain d, int [][] map){
 			//determine then normalized width
 			float width = (1.0f / domainXScale) * cWidth;
 			float height = (1.0f / domainYScale) * cHeight;
+			
+			for (int i = 0; i < numLanes; ++i) {
+				float rx = i*laneWidth;
+				float ryTop = cHeight - height - this.dheight*height;
+				float ryBottom = cHeight - height;
+			
+			}
 			
 			//pass through each cell of the map and if it is a wall, draw it
 			for(int i = 0; i < this.dwidth; i++){

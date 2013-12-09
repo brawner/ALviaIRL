@@ -96,7 +96,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 		}
 		
 		for (double[] point : blockLocations) {
-			ObjectInstance block = new ObjectInstance(d.getObjectClass(blockClass), blockClass+0);
+			ObjectInstance block = new ObjectInstance(d.getObjectClass(blockClass), blockClass + point[0] + "_" + point[1]);
 			block.setValue(ATTX, point[0]);
 			block.setValue(ATTY, point[1]);
 			s.addObject(block);
