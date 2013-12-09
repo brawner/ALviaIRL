@@ -28,11 +28,11 @@ public class MacroGridWorld extends GridWorldDomain{
 	public static final String							ATTSTEPS = "agentstepsattribute";
 	public static final int								MIN_REWARD = 10;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 40;
-	public static final int								WIDTH = 40;
+	public static final int								HEIGHT = 20;
+	public static final int								WIDTH = 20;
 	
-	public static final int								MCELL_HEIGHT = 8;
-	public static final int								MCELL_WIDTH = 8;
+	public static final int								MCELL_HEIGHT = 10;
+	public static final int								MCELL_WIDTH = 10;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
 	public static final int								MCELL_FILLED = 5;
 	
@@ -134,6 +134,11 @@ public class MacroGridWorld extends GridWorldDomain{
 		return functions;
 	}
 	
+	//wrapper of old reward generation function
+	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions) {
+		return generateRandomRewards(functions, 0);
+	}
+	
 	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions, int numberFilled) {
 				
 		Random rando = new Random();
@@ -209,8 +214,8 @@ public class MacroGridWorld extends GridWorldDomain{
 			ObjectInstance agent = agents.get(0);
 			int agentX = agent.getDiscValForAttribute(MacroGridWorld.ATTX);
 			int agentY = agent.getDiscValForAttribute(MacroGridWorld.ATTY);
-			return (left <= agentX && agentX <= right &&
-					bottom <= agentY && agentY <= top);
+			return (left <= agentX && agentX < right && 
+					bottom <= agentY && agentY < top);
 				
 		}
 	}

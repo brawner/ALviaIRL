@@ -36,7 +36,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 	public void euclideanDistVsIterations(int maxIterations, int nRuns, String outputPath){
 		//0 - generate a random reward funciton on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		rf = randomReward;
 		
@@ -71,11 +71,13 @@ public class TestConvergence extends IRLGridWorldDemo{
 		long start = System.currentTimeMillis();
 		
 		for (int run = 0; run < nRuns; run++) {
+			ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
+
 			double[] featureWeightScoreHistory = new double[maxIterations];
 			
 			Policy projPolicy = 
 					ApprenticeshipLearning.projectionMethod(
-							this.domain, planner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxIterations, 
+							this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxIterations, 
 							ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
 			List<EpisodeAnalysis> apprenticeEpisodes = new ArrayList<EpisodeAnalysis>();
 			for (int i = 0; i < maxIterations; ++i) {
@@ -93,7 +95,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 	public void euclideanDistVsIterationsIndependent(int maxIterations, int nRuns, String outputPath){
 		//0 - generate a random reward funciton on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		rf = randomReward;
 		
@@ -131,12 +133,13 @@ public class TestConvergence extends IRLGridWorldDemo{
 			System.out.print("run: " + run + ", maxi: ");
 			double[] runResults = new double[maxIterations];
 			for (int maxi = 1; maxi < maxIterations; maxi++) {
-			
+				ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
+
 				double[] featureWeightScoreHistory = new double[maxi];
 				
 				Policy projPolicy = 
 						ApprenticeshipLearning.projectionMethod(
-								this.domain, planner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxi, 
+								this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxi, 
 								ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
 				for (int i = 0; i < maxi; ++i) {
 					featureWeightScoreHistory[i] *= (1-GAMMA);
@@ -154,15 +157,15 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 	}
 	
-	public void performanceToExpertSampleSize(int [] sampleSizes, int nRuns, String outputPath){
+	public void performanceToExpertSampleSize(int [] sampleSizes, int nRuns, String outputPath, String algorithm){
 		//0 - generate a random reward funciton on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		rf = randomReward;
 		
 		// 1 - Get Expert Policy, trajectories, and feature expectation estimate (via VI)
-		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
+		//create an instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
 		ValueIteration planner = new ValueIteration(domain, randomReward, tf, GAMMA, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
@@ -179,6 +182,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 			maxSamples = Math.max(sampleSizes[i],maxSamples);
 		}
 		
+		//get the expert's expected value (basically measures how good the policy is)
 		double expertValueEstimate = 0.0;
 		for (int j =0; j < N_VALUE_ESTIMATION_SAMPLES; j++) {
 			EpisodeAnalysis episode = expertPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), randomReward, tf,100);
@@ -188,6 +192,9 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 		//By Sample Size, do nRun runs
 		List<double[]> results = new ArrayList<double[]>();
+		
+		//apprentice planner
+		//RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		
 		for (int sampleSize : sampleSizes) {
 			System.out.print("SampleSize: "+sampleSize+ " ");
@@ -202,18 +209,30 @@ public class TestConvergence extends IRLGridWorldDemo{
 			}
 			
 			//get expert feature expectation
-			double[] expertFExp = ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, GAMMA);
+			//double[] expertFExp = ApprenticeshipLearning.estimateFeatureExpectation(
+					//expertEpisodes, featureFunctions, GAMMA);
 			
+			Policy apprenticePolicy = null;
 			//run it under this sample size a bunch of times
 			for (int run = 0 ; run < nRuns; run++) {
+				ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
+				apprenticePlanner.toggleDebugPrinting(false);
+				
 				System.out.print(run);
-				Policy projPolicy = ApprenticeshipLearning.projectionMethod(
-								this.domain, planner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, N_ALGO_ITERATIONS);
+				if (algorithm == "projection") {
+					apprenticePolicy = ApprenticeshipLearning.projectionMethod(
+								this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, N_ALGO_ITERATIONS);
+				}
+				else if (algorithm == "maxmargin") {
+					apprenticePolicy = ApprenticeshipLearning.maxMarginMethod(
+							this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, N_ALGO_ITERATIONS);
+				}
 				
 				double valueEstimate = 0.0;
 				for (int v = 0 ; v < N_VALUE_ESTIMATION_SAMPLES; v++) {
-					EpisodeAnalysis ea = projPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
+					EpisodeAnalysis ea = apprenticePolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
 					valueEstimate += ea.getDiscountedReturn(GAMMA);
+					ea.writeToFile(outputPath +"/traj/"+ algorithm+"_"+run+"_"+sampleSize, sp);
 				}
 				valueEstimate /= N_VALUE_ESTIMATION_SAMPLES;
 				
@@ -228,10 +247,13 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 	}
 	
+	
+	
+	
 	public void mimicToExpert(int [] sampleSizes, int nRuns, String outputPath){
 		//0 - generate a random reward funciton on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		rf = randomReward;
 		
@@ -290,6 +312,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 				for (int v = 0 ; v < N_VALUE_ESTIMATION_SAMPLES; v++) {
 					EpisodeAnalysis ea = mimicPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
 					valueEstimate += ea.getDiscountedReturn(GAMMA);
+					ea.writeToFile(outputPath +"/traj/"+ "Mimic_"+run+"_"+sampleSize, sp);
 				}
 				valueEstimate /= N_VALUE_ESTIMATION_SAMPLES;
 				
@@ -345,9 +368,11 @@ public class TestConvergence extends IRLGridWorldDemo{
 			this.rando = new Random();
 			this.hashFactory = new NameDependentStateHashFactory();
 			
+			
 			//generate state-action mapping by looking at all the state-action info in the expert's examples
 			for (EpisodeAnalysis ea :eas) {
-				for (int step = 0; step < ea.numTimeSteps(); step++) {
+				for (int step = 0; step < ea.numTimeSteps() - 1; step++) {
+					
 					Object statehash = this.hashFactory.hashState(ea.getState(step));
 					if (!this.stateActionMapping.containsKey(statehash)) {
 						try {
@@ -399,9 +424,10 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 		//tester.euclideanDistVsIterations(30, 5, outputPath);
 		//tester.euclideanDistVsIterationsIndependent(30, 5, outputPath);
-		//tester.visualizeEpisode(outputPath+"/traj/");
-		int [] sampleSizes = {1,4, 8,10,40,80,100};
-		tester.performanceToExpertSampleSize(sampleSizes, 5, outputPath);
-		tester.mimicToExpert(sampleSizes, 5, outputPath);
+		
+		int [] sampleSizes = {1,4,8,10,40,80,100};
+		tester.performanceToExpertSampleSize(sampleSizes, 5, outputPath, "projection");
+		//tester.mimicToExpert(sampleSizes, 5, outputPath);
+		tester.visualizeEpisode(outputPath+"/traj/");
 	}
 }

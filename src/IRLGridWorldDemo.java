@@ -31,7 +31,7 @@ public class IRLGridWorldDemo {
 	TerminalFunction			tf;
 	State 						initialState;
 	DiscreteStateHashFactory	hashingFactory;
-	static double				GAMMA = .99;
+	static double				GAMMA = .8;
 	double						FEXP_EPSILON = .01;
 	
 	
