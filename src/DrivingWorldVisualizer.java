@@ -24,13 +24,13 @@ public class DrivingWorldVisualizer extends GridWorldVisualizer {
 		// TODO Auto-generated constructor stub
 	}
 
-public static Visualizer getVisualizer(Domain d, int [][] map, int leftGrassRight, int rightGrassLeft, int numLanes, int laneWidth){
+public static Visualizer getVisualizer(Domain d, int [][] map){
 		
 		Visualizer v = new Visualizer();
 		
 		v.addStaticPainter(new MapPainter(d, map));
-		v.addObjectClassPainter(DrivingGridWorld.blockClass, new GridWorldVisualizer.CellPainter(Color.blue, map));
 		v.addObjectClassPainter(GridWorldDomain.CLASSAGENT, new GridWorldVisualizer.CellPainter(Color.red, map));
+		v.addObjectClassPainter(DrivingGridWorld.blockClass, new GridWorldVisualizer.CellPainter(Color.blue, map));
 		
 		return v;
 	}
@@ -45,8 +45,8 @@ public static Visualizer getVisualizer(Domain d, int [][] map, int leftGrassRigh
 		int							leftGrassRight;
 		int							rightGrassLeft;
 		
-		
-		public MapPainter(Domain domain, int [][] map, int leftGrassRight, int rightGrassLeft, int numLanes, int laneWidth) {
+		//, int leftGrassRight, int rightGrassLeft, int numLanes, int laneWidth
+		public MapPainter(Domain domain, int [][] map) {
 			this.dwidth = map.length;
 			this.dheight = map[0].length;
 			this.map = map;

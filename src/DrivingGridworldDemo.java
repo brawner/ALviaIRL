@@ -20,6 +20,7 @@ import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.singleagent.explorer.VisualExplorerRecorder;
 import burlap.oomdp.visualizer.Visualizer;
 
@@ -57,9 +58,9 @@ public class DrivingGridworldDemo {
 			outputPath = outputPath + "/";
 		}
 		
-		PropositionalFunction[] featureFunctions = DrivingGridWorld.getFeatureFunctions(gridWorldDomain);
-		Map<String, Double> rewards = DrivingGridWorld.generateRewards(featureFunctions);
-		RewardFunction rewardFunction = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
+		PropositionalFunction[] featureFunctions = DrivingGridWorld.getFeatureFunctions(gridWorldDomain, gridWorld);
+		//Map<String, Double> rewards = DrivingGridWorld.generateRewards(featureFunctions);
+		//RewardFunction rewardFunction = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		StateHashFactory hashingFactory = new DiscreteStateHashFactory();
 		
 		TerminalFunction terminalFunction = new TerminalFunction() {
@@ -68,7 +69,7 @@ public class DrivingGridworldDemo {
 		};
 
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		ValueIteration planner = new ValueIteration(gridWorldDomain, rewardFunction, terminalFunction, 0.9, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(gridWorldDomain, new UniformCostRF(), terminalFunction, 0.9, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
 		planner.planFromState(initialState);
@@ -83,13 +84,13 @@ public class DrivingGridworldDemo {
 		}
 
 		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(gridWorldDomain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
-		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, rewardFunction, terminalFunction, 100);
+		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, new UniformCostRF(), terminalFunction, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", stateParser);
 	}
 	public static void main(String[] args) {
 		String outputPath = "output";
-		int width = 11;
-		int height = 11;
+		int width = 20;
+		int height = 20;
 		int numLanes = 3;
 		int laneWidth = 3;
 		
