@@ -57,7 +57,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 		this.laneCount = numLanes;
 		this.map = new int[width][height];
 		int roadWidth = numLanes * laneWidth;
-		this.leftGrassRight = width - roadWidth;
+		this.leftGrassRight = (width - roadWidth)/2;
 		this.rightGrassLeft = this.leftGrassRight + roadWidth;
 		
 		for (int i = 0; i < width; ++i) {
