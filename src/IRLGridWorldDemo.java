@@ -34,9 +34,13 @@ public class IRLGridWorldDemo {
 	TerminalFunction			tf;
 	State 						initialState;
 	DiscreteStateHashFactory	hashingFactory;
+<<<<<<< HEAD
 	PropositionalFunction[]		featureFunctions;
 	Map<String, Double>			rewardMap;
 	static double				GAMMA = .99;
+=======
+	static double				GAMMA = .8;
+>>>>>>> 6d71636cf30704c5a7f08ae606041ed3a30ef255
 	double						FEXP_EPSILON = .01;
 	
 	

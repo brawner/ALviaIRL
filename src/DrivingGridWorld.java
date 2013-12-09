@@ -73,10 +73,12 @@ public class DrivingGridWorld extends GridWorldDomain {
 		Visualizer v = GridWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
 		VisualExplorerRecorder exp = new VisualExplorerRecorder(domain, v, initialState);
 		
-		exp.addKeyAction("w", MacroGridWorld.ACTIONNORTH);
-		exp.addKeyAction("s", MacroGridWorld.ACTIONSOUTH);
-		exp.addKeyAction("d", MacroGridWorld.ACTIONEAST);
-		exp.addKeyAction("a", MacroGridWorld.ACTIONWEST);
+		exp.addKeyAction("w", GridWorldDomain.ACTIONNORTH);
+		exp.addKeyAction("s", GridWorldDomain.ACTIONSOUTH);
+		exp.addKeyAction("d", GridWorldDomain.ACTIONEAST);
+		exp.addKeyAction("a", GridWorldDomain.ACTIONWEST);
+		
+		//move blocks when a key is pressed
 		
 		List<EpisodeAnalysis> recordedEpisodes = new ArrayList<EpisodeAnalysis>();
 		exp.initGUIAndRecord(recordedEpisodes);
@@ -89,8 +91,11 @@ public class DrivingGridWorld extends GridWorldDomain {
 	}
 	
 	public static PropositionalFunction[] getFeatureFunctions(Domain domain) {
-		// TODO need to return an array of PropositionalFunctions which correspond to the features available in DrivingGridWorld.
+		// TODO need to return an array of PropositionalFunctions which correspond to the
+		// features available in DrivingGridWorld.
 		// TODO feel free to change the declaration.
+		
+		//features: near a block
 		return null;
 	}
 	
