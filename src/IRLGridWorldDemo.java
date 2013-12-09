@@ -38,7 +38,7 @@ public class IRLGridWorldDemo {
 	Map<String, Double>			rewardMap;
 	static double				GAMMA = .99;
 	double						FEXP_EPSILON = .01;
-	
+	RandomStartStateGenerator	startStateGenerator;
 	
 	public IRLGridWorldDemo() {
 		
@@ -50,6 +50,7 @@ public class IRLGridWorldDemo {
 		//set up the initial state
 		initialState = MacroGridWorld.getOneAgentState(domain);
 		MacroGridWorld.setAgent(initialState, 0,0);
+		this.startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
 				//(int)(Math.random()*MacroGridWorld.WIDTH), (int)(Math.random()*MacroGridWorld.HEIGHT));
 		
 		//rf = new IRLGridRF(irlgw.getMacroCellRewards(initialState));
@@ -137,7 +138,7 @@ public class IRLGridWorldDemo {
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < 10; ++i) {
-			EpisodeAnalysis episode = p.evaluateBehavior(initialState, randomReward, tf,100);
+			EpisodeAnalysis episode = p.evaluateBehavior(this.startStateGenerator.generateState(), randomReward, tf,100);
 			episodes.add(episode);
 		}
 		
@@ -214,10 +215,11 @@ public class IRLGridWorldDemo {
 		IRLGridWorldDemo tester = new IRLGridWorldDemo();
 		String outputPath = "output"; //directory to record results
 		
-		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		
+		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
 		//tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		
-		
+		/*
 		Policy policy = new ExpertPolicy(20, 20, tester.domain.getAction(GridWorldDomain.ACTIONNORTH),
 				tester.domain.getAction(GridWorldDomain.ACTIONSOUTH),
 				tester.domain.getAction(GridWorldDomain.ACTIONWEST),
@@ -230,8 +232,9 @@ public class IRLGridWorldDemo {
 			EpisodeAnalysis epAnalysis = policy.evaluateBehavior(state, new UniformCostRF(), 50);
 			epAnalysis.writeToFile(outputPath + "/random" + i, tester.sp);
 		}
-		
-		tester.visualizeEpisode(outputPath); //visualizers the policy sample
+		*/
+		//tester.visualizeEpisode(outputPath);
+		tester.visualizeEpisodeWithFeatures(outputPath); //visualizers the policy sample
 
 	}
 	

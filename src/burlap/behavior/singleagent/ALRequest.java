@@ -25,12 +25,18 @@ public class ALRequest {
 		this.domain = d;
 	}
 	
+	public Domain getDomain() {return this.domain;}
+	
 	public void setPlanner(OOMDPPlanner p) {
 		this.planner = p;
 	}
 	
+	public OOMDPPLanner getPlanner() {return this.planner;}
+	
 	public void setFeatureFunctions(PropositionalFunction[] functions) {
 		this.featureFunctions= functions.clone();
 	}
+	
+	public PropositionalFunction[] getFeatureFunctions() {return this.featureFunctions.clone();}	
 
 }
