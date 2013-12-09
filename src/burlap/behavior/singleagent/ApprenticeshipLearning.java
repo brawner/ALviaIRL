@@ -148,7 +148,7 @@ public class ApprenticeshipLearning {
 		if (request.getUsingMaxMargin()) {
 			return ApprenticeshipLearning.maxMarginMethod(request);
 		}
-		return ApprenticeshipLearning.maxMarginMethod(request);
+		return ApprenticeshipLearning.projectionMethod(request);
 	}
 	
 	
@@ -199,8 +199,7 @@ public class ApprenticeshipLearning {
 		List<double[]> featureExpectationsHistory = new ArrayList<double[]>();
 		double[] expertExpectations = 
 				ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, gamma);
-		
-		State initialState = ApprenticeshipLearning.getInitialState(expertEpisodes);
+		State initialState = request.getStartStateGenerator().generateState();
 		if (initialState == null) {
 			return null;
 		}
@@ -319,7 +318,7 @@ public class ApprenticeshipLearning {
 		double[] expertExpectations = 
 				ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, gamma);
 
-		State initialState = ApprenticeshipLearning.getInitialState(expertEpisodes);
+		State initialState = request.getStartStateGenerator().generateState();
 		if (initialState == null) {
 			return null;
 		}
