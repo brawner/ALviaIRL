@@ -228,6 +228,7 @@ import burlap.oomdp.visualizer.Visualizer;
 				@Override
 				public State applySpecialAction(State curState) {
 					synchronized(VisualExplorerRecorder.this) {
+						VisualExplorerRecorder.this.recordedEpisodes.add(VisualExplorerRecorder.this.currentEpisode);
 						VisualExplorerRecorder.this.isRecording = !VisualExplorerRecorder.this.isRecording;
 					}
 					return curState;

@@ -10,20 +10,24 @@ import java.util.Map;
 import java.util.Random;
 
 import burlap.behavior.singleagent.ApprenticeshipLearning;
+import burlap.behavior.singleagent.ApprenticeshipLearningRequest;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.RandomStartStateGenerator;
 import burlap.behavior.singleagent.Policy.ActionProb;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
 import burlap.behavior.statehashing.NameDependentStateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
 
 
 public class TestConvergence extends IRLGridWorldDemo{
@@ -70,15 +74,18 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 		long start = System.currentTimeMillis();
 		
+		ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
+		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
+		ApprenticeshipLearningRequest request = 
+				new ApprenticeshipLearningRequest(this.domain, apprenticePlanner, featureFunctions, expertEpisodes, startStateGenerator);
+		request.setGamma(GAMMA);
+		request.setEpsilon(FEXP_EPSILON);
+		request.setMaxIterations(maxIterations);
+		request.setPolicyCount(ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES);
+		
 		for (int run = 0; run < nRuns; run++) {
-			ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
-
-			double[] featureWeightScoreHistory = new double[maxIterations];
-			
-			Policy projPolicy = 
-					ApprenticeshipLearning.projectionMethod(
-							this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxIterations, 
-							ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
+			Policy projPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
+			double[] featureWeightScoreHistory = request.getTHistory();
 			List<EpisodeAnalysis> apprenticeEpisodes = new ArrayList<EpisodeAnalysis>();
 			for (int i = 0; i < maxIterations; ++i) {
 				featureWeightScoreHistory[i] *= (1-GAMMA);
@@ -129,18 +136,21 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 		long start = System.currentTimeMillis();
 		
+		ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
+		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
+		ApprenticeshipLearningRequest request = 
+				new ApprenticeshipLearningRequest(this.domain, apprenticePlanner, featureFunctions, expertEpisodes, startStateGenerator);
+		request.setGamma(GAMMA);
+		request.setEpsilon(FEXP_EPSILON);
+		request.setMaxIterations(maxIterations);
+		request.setPolicyCount(ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES);
+		
 		for (int run = 0; run < nRuns; run++) {
 			System.out.print("run: " + run + ", maxi: ");
 			double[] runResults = new double[maxIterations];
 			for (int maxi = 1; maxi < maxIterations; maxi++) {
-				ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
-
-				double[] featureWeightScoreHistory = new double[maxi];
-				
-				Policy projPolicy = 
-						ApprenticeshipLearning.projectionMethod(
-								this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxi, 
-								ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
+				Policy projPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
+				double[] featureWeightScoreHistory = request.getTHistory();
 				for (int i = 0; i < maxi; ++i) {
 					featureWeightScoreHistory[i] *= (1-GAMMA);
 				}
@@ -219,15 +229,12 @@ public class TestConvergence extends IRLGridWorldDemo{
 				apprenticePlanner.toggleDebugPrinting(false);
 				
 				System.out.print(run);
-				if (algorithm == "projection") {
-					apprenticePolicy = ApprenticeshipLearning.projectionMethod(
-								this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, N_ALGO_ITERATIONS);
-				}
-				else if (algorithm == "maxmargin") {
-					apprenticePolicy = ApprenticeshipLearning.maxMarginMethod(
-							this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, N_ALGO_ITERATIONS);
-				}
-				
+				StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
+				ApprenticeshipLearningRequest request = 
+						new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, expertEpisodes, startStateGenerator);
+				request.setUsingMaxMargin(algorithm == "maxmargin");
+				apprenticePolicy = ApprenticeshipLearning.getLearnedPolicy(request);
+
 				double valueEstimate = 0.0;
 				for (int v = 0 ; v < N_VALUE_ESTIMATION_SAMPLES; v++) {
 					EpisodeAnalysis ea = apprenticePolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
