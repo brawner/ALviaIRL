@@ -28,24 +28,30 @@ import burlap.oomdp.singleagent.RewardFunction;
 
 public class TestConvergence extends IRLGridWorldDemo{
 	
-	final int			N_EXPERT_FE_SAMPLES = 30;
+	final int			N_EXPERT_FE_SAMPLES = 100;
 	final int			N_APPRENTICE_FE_SAMPLES = 5;
 	final int			N_ALGO_ITERATIONS = 20;
 	final int			N_VALUE_ESTIMATION_SAMPLES = 100;
 
-	public void euclideanDistVsIterations(int maxIterations, int nRuns, String outputPath){
-		//0 - generate a random reward funciton on the gridworld
+	/**
+	 * This determines the distance to an expert's feature distribution
+	 * over number of iterations of the algorithm
+	 * 
+	 * @param maxIterations
+	 * @param nRuns
+	 * @param outputPath
+	 */
+	public void testAlgorithmIterations(int maxIterations, int nRuns, String outputPath){
+		//0 - generate a random reward function on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
 		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
-		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
-		rf = randomReward;
+		rf = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		
 		// 1 - Get Expert Policy, trajectories, and feature expectation estimate (via VI)
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		ValueIteration planner = new ValueIteration(domain, randomReward, tf, GAMMA, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(domain, rf, tf, GAMMA, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
-		//MacroGridWorld.setAgent(initialState, 0,0);
 		planner.planFromState(MacroGridWorld.getRandomInitialState(this.domain));
 		
 		//create a Q-greedy policy using the Q-values that the planner computes
@@ -55,8 +61,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> expertEpisodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < N_EXPERT_FE_SAMPLES; i++) {
-			//MacroGridWorld.setAgent(initialState, (int)(Math.random()*MacroGridWorld.WIDTH), (int)(Math.random()*MacroGridWorld.HEIGHT));
-			EpisodeAnalysis episode = expertPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), randomReward, tf,100);
+			EpisodeAnalysis episode = expertPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, tf,100);
 			expertEpisodes.add(episode);
 			episode.writeToFile(outputPath +"/traj/"+ "Expert_"+i, sp);
 		}
@@ -72,13 +77,17 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 		for (int run = 0; run < nRuns; run++) {
 			ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
-
+			apprenticePlanner.toggleDebugPrinting(false);
+			
 			double[] featureWeightScoreHistory = new double[maxIterations];
 			
 			Policy projPolicy = 
 					ApprenticeshipLearning.projectionMethod(
 							this.domain, apprenticePlanner, featureFunctions, expertEpisodes, GAMMA, FEXP_EPSILON, maxIterations, 
 							ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES, featureWeightScoreHistory);
+			EpisodeAnalysis apprenticeEA = projPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
+			apprenticeEA.writeToFile(outputPath +"/traj/"+ "ApprenticeSample_run"+run, sp);
+
 			List<EpisodeAnalysis> apprenticeEpisodes = new ArrayList<EpisodeAnalysis>();
 			for (int i = 0; i < maxIterations; ++i) {
 				featureWeightScoreHistory[i] *= (1-GAMMA);
@@ -134,7 +143,8 @@ public class TestConvergence extends IRLGridWorldDemo{
 			double[] runResults = new double[maxIterations];
 			for (int maxi = 1; maxi < maxIterations; maxi++) {
 				ValueIteration apprenticePlanner = new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100);		
-
+				apprenticePlanner.toggleDebugPrinting(true);
+				
 				double[] featureWeightScoreHistory = new double[maxi];
 				
 				Policy projPolicy = 
@@ -422,12 +432,12 @@ public class TestConvergence extends IRLGridWorldDemo{
 		TestConvergence tester = new TestConvergence();
 		String outputPath = "results"; //directory to record results
 		
-		//tester.euclideanDistVsIterations(30, 5, outputPath);
-		//tester.euclideanDistVsIterationsIndependent(30, 5, outputPath);
+		//tester.testAlgorithmIterations(30, 5, outputPath);
+		//tester.euclideanDistVsIterationsIndependent(10,5,outputPath);
 		
-		int [] sampleSizes = {1,4,8,10,40,80,100};
-		tester.performanceToExpertSampleSize(sampleSizes, 5, outputPath, "projection");
-		//tester.mimicToExpert(sampleSizes, 5, outputPath);
+		//int [] sampleSizes = {1,4,8,10,40,80,100};
+		//tester.performanceToExpertSampleSize(sampleSizes, 10, outputPath, "projection");
+		//tester.mimicToExpert(sampleSizes, 10, outputPath);
 		tester.visualizeEpisode(outputPath+"/traj/");
 	}
 }
