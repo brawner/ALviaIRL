@@ -3,9 +3,11 @@ import java.util.List;
 import java.util.Map;
 
 import burlap.behavior.singleagent.ApprenticeshipLearning;
+import burlap.behavior.singleagent.ApprenticeshipLearningRequest;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.RandomStartStateGenerator;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
@@ -14,12 +16,14 @@ import burlap.behavior.statehashing.StateHashFactory;
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
 import burlap.domain.singleagent.gridworld.GridWorldStateParser;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
+import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.singleagent.RewardFunction;
+import burlap.oomdp.singleagent.SADomain;
 import burlap.oomdp.singleagent.common.UniformCostRF;
 import burlap.oomdp.singleagent.explorer.VisualExplorerRecorder;
 import burlap.oomdp.visualizer.Visualizer;
@@ -83,7 +87,11 @@ public class DrivingGridworldDemo {
 			episode.writeToFile(outputPath + "expert" + index++, stateParser);
 		}
 
-		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(gridWorldDomain, planner, featureFunctions, expertEpisodes, 0.9, 0.01, 100);
+		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)gridWorldDomain, initialState);
+		
+		ApprenticeshipLearningRequest request =
+				new ApprenticeshipLearningRequest(gridWorldDomain, planner, featureFunctions, expertEpisodes, startStateGenerator);
+		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, new UniformCostRF(), terminalFunction, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", stateParser);
 	}

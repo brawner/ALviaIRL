@@ -4,9 +4,11 @@ import java.util.Map;
 import java.util.Random;
 
 import burlap.behavior.singleagent.ApprenticeshipLearning;
+import burlap.behavior.singleagent.ApprenticeshipLearningRequest;
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.EpisodeSequenceVisualizer;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.RandomStartStateGenerator;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
@@ -14,6 +16,7 @@ import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
 import burlap.domain.singleagent.gridworld.GridWorldStateParser;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
+import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
@@ -200,7 +203,11 @@ public class IRLGridWorldDemo {
 		
 		start = System.currentTimeMillis();
 		
-		Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.99, 0.01, 100);
+		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
+		ApprenticeshipLearningRequest request = 
+				new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, expertEpisodes, startStateGenerator);
+		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
+		//Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.99, 0.01, 100);
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
 		projectionEpisode.writeToFile(outputPath + "Projection", sp);
 		end = System.currentTimeMillis();
