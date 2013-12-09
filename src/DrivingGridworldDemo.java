@@ -26,7 +26,7 @@ import burlap.oomdp.visualizer.Visualizer;
 
 public class DrivingGridworldDemo {
 	public static List<EpisodeAnalysis> interactive(Domain domain, DrivingGridWorld gridWorld, State initialState) {
-		Visualizer v = GridWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
+		Visualizer v = DrivingWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
 		VisualExplorerRecorder exp = new VisualExplorerRecorder(domain, v, initialState);
 		
 		exp.addKeyAction("w", MacroGridWorld.ACTIONNORTH);
@@ -89,7 +89,7 @@ public class DrivingGridworldDemo {
 	public static void main(String[] args) {
 		String outputPath = "output";
 		int width = 11;
-		int height = 21;
+		int height = 11;
 		int numLanes = 3;
 		int laneWidth = 3;
 		

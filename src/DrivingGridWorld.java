@@ -13,6 +13,7 @@ import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer.CellPainter;
 import burlap.domain.singleagent.gridworld.GridWorldVisualizer.MapPainter;
 import burlap.oomdp.auxiliary.StateParser;
+import burlap.oomdp.core.Attribute;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.ObjectClass;
 import burlap.oomdp.core.ObjectInstance;
@@ -39,14 +40,18 @@ public class DrivingGridWorld extends GridWorldDomain {
 		if (laneWidth * numLanes > width) {
 			laneWidth = width / numLanes;
 		}
+		if ((width - numLanes * laneWidth) % 2 != 0) {
+			width++;
+		}
+			
 		this.laneCount = numLanes;
 		this.map = new int[width][height];
 		int roadWidth = numLanes * laneWidth;
-		this.leftGrassRight = width - roadWidth;
+		this.leftGrassRight = (int)((width - roadWidth) / 2f);
 		this.rightGrassLeft = leftGrassRight + roadWidth;
 		
 		for (int i = 0; i < width; ++i) {
-			if (i <= leftGrassRight || i >= rightGrassLeft) {
+			if (i < leftGrassRight || i >= rightGrassLeft) {
 				for (int j = 0; j < height; ++j) {
 					this.map[i][j] = DrivingWorldVisualizer.grass;
 				}
@@ -64,13 +69,23 @@ public class DrivingGridWorld extends GridWorldDomain {
 		Domain domain = super.generateDomain();
 		
 		ObjectClass block = new ObjectClass(domain, DrivingGridWorld.blockClass);
+		Attribute xatt = new Attribute(domain, ATTX, Attribute.AttributeType.DISC);
+		xatt.setDiscValuesForRange(0, this.width-1, 1); //-1 due to inclusivity vs exclusivity
+		
+		Attribute yatt = new Attribute(domain, ATTY, Attribute.AttributeType.DISC);
+		yatt.setDiscValuesForRange(0, this.height-1, 1); //-1 due to inclusivity vs exclusivity
+		block.addAttribute(xatt);
+		block.addAttribute(yatt);
 		
 		return domain;
 	}
 	
 	public static State getOneAgentState(Domain d, int[] xLocations, int height, int blockCount) {
 		State s = new State();
-		s.addObject(new ObjectInstance(d.getObjectClass(agentClass), agentClass+0));
+		ObjectInstance agent = new ObjectInstance(d.getObjectClass(agentClass), agentClass+0);
+		agent.setValue(ATTX, xLocations[0]);
+		agent.setValue(ATTY, 0);
+		s.addObject(agent);
 		Set<double[]> blockLocations = new HashSet<double[]>();
 		Random random = new Random();
 		
@@ -90,7 +105,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 	}
 	
 	public List<EpisodeAnalysis> interactive(Domain domain, DrivingGridWorld gridWorld, State initialState){
-		Visualizer v = GridWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
+		Visualizer v = DrivingWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
 		VisualExplorerRecorder exp = new VisualExplorerRecorder(domain, v, initialState);
 		
 		exp.addKeyAction("w", GridWorldDomain.ACTIONNORTH);
@@ -106,7 +121,7 @@ public class DrivingGridWorld extends GridWorldDomain {
 	}
 	
 	public void visualizeEpisode(String outputPath, Domain domain, DrivingGridWorld gridWorld, StateParser stateParser){
-		Visualizer v = GridWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
+		Visualizer v = DrivingWorldVisualizer.getVisualizer(domain, gridWorld.getMap());
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, domain, stateParser, outputPath);
 	}
 	
