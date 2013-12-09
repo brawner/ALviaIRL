@@ -15,10 +15,10 @@ public class ExpertPolicy extends Policy {
 	private Action west;
 	private Action east;
 	
-	public ExpertPolicy(int maxX, int maxY, 
+	public ExpertPolicy(int x, int y, 
 			Action northAction, Action southAction, Action westAction, Action eastAction) {
-		this.goalX = (int)Math.floor( maxX * 0.75);
-		this.goalY = (int)Math.floor(maxY * 0.75);
+		this.goalX = x;
+		this.goalY = y;
 		this.north = northAction;
 		this.south = southAction;
 		this.east = eastAction;
