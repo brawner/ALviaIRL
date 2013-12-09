@@ -214,7 +214,17 @@ public class MacroGridWorld extends GridWorldDomain{
 			ObjectInstance agent = agents.get(0);
 			int agentX = agent.getDiscValForAttribute(MacroGridWorld.ATTX);
 			int agentY = agent.getDiscValForAttribute(MacroGridWorld.ATTY);
+<<<<<<< HEAD
 			return this.isTrue(agentX, agentY);
+=======
+<<<<<<< HEAD
+			return this.isTrue(agentX, agentY);
+=======
+			return (left <= agentX && agentX < right && 
+					bottom <= agentY && agentY < top);
+>>>>>>> 6d71636cf30704c5a7f08ae606041ed3a30ef255
+				
+>>>>>>> 5ee252727280595c93f6524d766c5b206c71ab75
 		}
 		
 		public boolean isTrue(int agentX, int agentY) {
