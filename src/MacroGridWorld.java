@@ -34,7 +34,7 @@ public class MacroGridWorld extends GridWorldDomain{
 	public static final int								MCELL_HEIGHT = 10;
 	public static final int								MCELL_WIDTH = 10;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
-	public static final int								MCELL_FILLED = 5;
+
 	
 	private final int macroCellVerticalCount;
 	private final int macroCellHorizontalCount;
@@ -134,12 +134,7 @@ public class MacroGridWorld extends GridWorldDomain{
 		return functions;
 	}
 	
-	//wrapper of old reward generation function
 	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions) {
-		return generateRandomRewards(functions, 0);
-	}
-	
-	public static Map<String, Double> generateRandomRewards(PropositionalFunction[] functions, int numberFilled) {
 				
 		Random rando = new Random();
 		//reward function generation algorithm from Ng et al

@@ -124,7 +124,7 @@ public class IRLGridWorldDemo {
 		}
 		
 		this.featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		this.rewardMap = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		this.rewardMap = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, this.rewardMap);
 		rf = randomReward;
 		
@@ -160,7 +160,7 @@ public class IRLGridWorldDemo {
 		}
 		
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001

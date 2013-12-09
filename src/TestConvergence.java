@@ -84,6 +84,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		request.setPolicyCount(ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES);
 		
 		for (int run = 0; run < nRuns; run++) {
+			request.setPlanner(new ValueIteration(domain, null, tf, GAMMA, hashingFactory, .01, 100));
 			Policy projPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 			double[] featureWeightScoreHistory = request.getTHistory();
 			List<EpisodeAnalysis> apprenticeEpisodes = new ArrayList<EpisodeAnalysis>();
@@ -99,6 +100,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		
 	}
 	
+	/*
 	public void euclideanDistVsIterationsIndependent(int maxIterations, int nRuns, String outputPath){
 		//0 - generate a random reward funciton on the gridworld
 		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
@@ -166,6 +168,7 @@ public class TestConvergence extends IRLGridWorldDemo{
 		writeResultsToFile(results, outputPath, "performanceToIterations_independent.csv");
 		
 	}
+	*/
 	
 	public void performanceToExpertSampleSize(int [] sampleSizes, int nRuns, String outputPath, String algorithm){
 		//0 - generate a random reward funciton on the gridworld
@@ -429,12 +432,12 @@ public class TestConvergence extends IRLGridWorldDemo{
 		TestConvergence tester = new TestConvergence();
 		String outputPath = "results"; //directory to record results
 		
-		//tester.euclideanDistVsIterations(30, 5, outputPath);
+		tester.euclideanDistVsIterations(30, 5, outputPath);
 		//tester.euclideanDistVsIterationsIndependent(30, 5, outputPath);
 		
 		int [] sampleSizes = {1,4,8,10,40,80,100};
-		tester.performanceToExpertSampleSize(sampleSizes, 5, outputPath, "projection");
+		//tester.performanceToExpertSampleSize(sampleSizes, 5, outputPath, "projection");
 		//tester.mimicToExpert(sampleSizes, 5, outputPath);
-		tester.visualizeEpisode(outputPath+"/traj/");
+		//tester.visualizeEpisode(outputPath+"/traj/");
 	}
 }

@@ -60,7 +60,7 @@ public class IRLGraphGeneration {
 		PropositionalFunction[] featureFunctions = 
 				MacroGridWorld.getPropositionalFunctions(domain, this.gridWorld);
 		
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, 4);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
@@ -103,7 +103,7 @@ public class IRLGraphGeneration {
 		PropositionalFunction[] featureFunctions = 
 				MacroGridWorld.getPropositionalFunctions(domain, this.gridWorld);
 		
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, 4);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
