@@ -15,6 +15,7 @@ import burlap.behavior.singleagent.planning.deterministic.DeterministicPlanner;
 import burlap.behavior.statehashing.NameDependentStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.statehashing.StateHashTuple;
+import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
 import burlap.oomdp.core.State;
@@ -175,6 +176,9 @@ public class ApprenticeshipLearning {
 		double gamma = request.getGamma();
 		int maxIterations = request.getMaxIterations();
 		double epsilon = request.getEpsilon();
+		int policyCount = request.getPolicyCount();
+		StateGenerator stateGenerator = request.getStartStateGenerator();
+		double[] tHistory = new double[maxIterations];
 		
 		long start = System.currentTimeMillis();
 		
@@ -199,10 +203,7 @@ public class ApprenticeshipLearning {
 		List<double[]> featureExpectationsHistory = new ArrayList<double[]>();
 		double[] expertExpectations = 
 				ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, gamma);
-		State initialState = request.getStartStateGenerator().generateState();
-		if (initialState == null) {
-			return null;
-		}
+		
 		end = System.currentTimeMillis();
 		if (end - start > 100) {
 			long c = end - start;
@@ -211,7 +212,7 @@ public class ApprenticeshipLearning {
 		
 		// (1b) Compute u^(0) = u(pi^(0))
 		EpisodeAnalysis episodeAnalysis = 
-				policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength);
+				policy.evaluateBehavior(stateGenerator.generateState(), new UniformCostRF(), maximumExpertEpisodeLength);
 		double[] featureExpectations = 
 				ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureFunctions, gamma);
 		featureExpectationsHistory.add(featureExpectations);
@@ -226,19 +227,20 @@ public class ApprenticeshipLearning {
 			// (2) Compute t^(i) = max_w min_j (wT (uE - u^(j)))
 			FeatureWeights featureWeights = 
 					solveFeatureWeights(expertExpectations, featureExpectationsHistory);
-
+			
 			// (3) if t^(i) <= epsilon, terminate
 			if (featureWeights == null || Math.abs(featureWeights.getScore()) <= epsilon) {
+				request.setTHistory(tHistory);
 				return policy;
 			}
-			
+			tHistory[i] = featureWeights.getScore();
 			// (4a) Calculate R = (w^(i))T * phi 
 			RewardFunction rewardFunction = 
 					ApprenticeshipLearning.generateRewardFunction(featureFunctions, featureWeights);
 			
 			// (4b) Compute optimal policy for pi^(i) give R
 			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
-			planner.planFromState(initialState);
+			planner.planFromState(stateGenerator.generateState());
 			
 			if (planner instanceof DeterministicPlanner) {
 				policy = new DDPlannerPolicy((DeterministicPlanner)planner);
@@ -248,14 +250,19 @@ public class ApprenticeshipLearning {
 			}
 			
 			// (5) Compute u^(i) = u(pi^(i))
-			episodeAnalysis = policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength);
+			
+			List<EpisodeAnalysis> evaluatedEpisodes = new ArrayList<EpisodeAnalysis>();
+			for (int j = 0; j < policyCount; ++j) {
+				evaluatedEpisodes.add(
+						policy.evaluateBehavior(stateGenerator.generateState(), rewardFunction, maximumExpertEpisodeLength));
+			}
 			featureExpectations = 
-					ApprenticeshipLearning.estimateFeatureExpectation(episodeAnalysis, featureFunctions, gamma);
+					ApprenticeshipLearning.estimateFeatureExpectation(evaluatedEpisodes, featureFunctions, gamma);
 			featureExpectationsHistory.add(featureExpectations);
 			
 			// (6) i++, go back to (2).
 		}
-		
+		request.setTHistory(tHistory);
 		end = System.currentTimeMillis();
 		if (end - start > 100) {
 			long c = end - start;
@@ -293,6 +300,7 @@ public class ApprenticeshipLearning {
 		int maxIterations = request.getMaxIterations();
 		double epsilon = request.getEpsilon();
 		int policyCount = request.getPolicyCount();
+		StateGenerator stateGenerator = request.getStartStateGenerator();
 		long start = System.currentTimeMillis();
 		
 		//Max steps that the apprentice will have to learn
@@ -317,11 +325,6 @@ public class ApprenticeshipLearning {
 		
 		double[] expertExpectations = 
 				ApprenticeshipLearning.estimateFeatureExpectation(expertEpisodes, featureFunctions, gamma);
-
-		State initialState = request.getStartStateGenerator().generateState();
-		if (initialState == null) {
-			return null;
-		}
 		
 		end = System.currentTimeMillis();
 		if (end - start > 100) {
@@ -343,7 +346,7 @@ public class ApprenticeshipLearning {
 		List<EpisodeAnalysis> sampleEpisodes = new ArrayList<EpisodeAnalysis>();
 		for (int j = 0; j < policyCount; ++j) {
 			sampleEpisodes.add(
-					policy.evaluateBehavior(initialState, new UniformCostRF(), maximumExpertEpisodeLength)); 
+					policy.evaluateBehavior(stateGenerator.generateState(), new UniformCostRF(), maximumExpertEpisodeLength)); 
 		}
 		double[] curFE = 
 				ApprenticeshipLearning.estimateFeatureExpectation(sampleEpisodes, featureFunctions, gamma);
@@ -385,7 +388,7 @@ public class ApprenticeshipLearning {
 			
 			// (4b) Compute optimal policy for pi^(i) give R
 			planner.plannerInit(domain, rewardFunction, terminalFunction, gamma, stateHashingFactory);
-			planner.planFromState(initialState);
+			planner.planFromState(stateGenerator.generateState());
 			if (planner instanceof DeterministicPlanner) {
 				policy = new DDPlannerPolicy((DeterministicPlanner)planner);
 			}
@@ -400,7 +403,7 @@ public class ApprenticeshipLearning {
 			List<EpisodeAnalysis> evaluatedEpisodes = new ArrayList<EpisodeAnalysis>();
 			for (int j = 0; j < policyCount; ++j) {
 				evaluatedEpisodes.add(
-						policy.evaluateBehavior(initialState, rewardFunction, maximumExpertEpisodeLength));
+						policy.evaluateBehavior(stateGenerator.generateState(), rewardFunction, maximumExpertEpisodeLength));
 			}
 			curFE = ApprenticeshipLearning.estimateFeatureExpectation(evaluatedEpisodes, featureFunctions, gamma);
 			featureExpectationsHistory.add(curFE.clone());

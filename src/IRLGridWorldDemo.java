@@ -40,7 +40,6 @@ public class IRLGridWorldDemo {
 	PropositionalFunction[]		featureFunctions;
 	Map<String, Double>			rewardMap;
 	static double				GAMMA = .99;
-	double						FEXP_EPSILON = .001;
 	RandomStartStateGenerator	startStateGenerator;
 	
 	public IRLGridWorldDemo() {

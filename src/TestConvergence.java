@@ -61,11 +61,13 @@ public class TestConvergence extends IRLGridWorldDemo{
 		//create a Q-greedy policy using the Q-values that the planner computes
 		Policy expertPolicy = new GreedyQPolicy((QComputablePlanner)planner);
 		
+		int trajectoryLength = (int) (Math.log((1 - GAMMA) * ApprenticeshipLearningRequest.DEFAULT_EPSILON) / Math.log(GAMMA));
+		
 		//run a sample of the computed policy and write its results to the file "VIResult.episode" in the directory outputPath
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> expertEpisodes = new ArrayList<EpisodeAnalysis>();
 		for (int i =0; i < N_EXPERT_FE_SAMPLES; i++) {
-			EpisodeAnalysis episode = expertPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, tf,100);
+			EpisodeAnalysis episode = expertPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, tf,trajectoryLength);
 			expertEpisodes.add(episode);
 			episode.writeToFile(outputPath +"/traj/"+ "Expert_"+i, sp);
 		}
@@ -84,14 +86,14 @@ public class TestConvergence extends IRLGridWorldDemo{
 		ApprenticeshipLearningRequest request = 
 				new ApprenticeshipLearningRequest(this.domain, apprenticePlanner, featureFunctions, expertEpisodes, startStateGenerator);
 		request.setGamma(GAMMA);
-		request.setEpsilon(FEXP_EPSILON);
 		request.setMaxIterations(maxIterations);
 		request.setPolicyCount(ApprenticeshipLearning.FEATURE_EXPECTATION_SAMPLES);
+		request.setUsingMaxMargin(true);
 		
 		for (int run = 0; run < nRuns; run++) {			
 			Policy projPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 			
-			EpisodeAnalysis apprenticeEA = projPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, 100);
+			EpisodeAnalysis apprenticeEA = projPolicy.evaluateBehavior(MacroGridWorld.getRandomInitialState(this.domain), rf, trajectoryLength);
 			apprenticeEA.writeToFile(outputPath +"/traj/"+ "ApprenticeSample_run"+run, sp);
 
 			double[] featureWeightScoreHistory = request.getTHistory();
@@ -449,12 +451,12 @@ public class TestConvergence extends IRLGridWorldDemo{
 		TestConvergence tester = new TestConvergence();
 		String outputPath = "results"; //directory to record results
 		
-		//tester.testAlgorithmIterations(30, 5, outputPath);
+		tester.testAlgorithmIterations(10, 1, outputPath);
 		//tester.euclideanDistVsIterationsIndependent(10,5,outputPath);
 		
 		//int [] sampleSizes = {1,4,8,10,40,80,100};
 		//tester.performanceToExpertSampleSize(sampleSizes, 10, outputPath, "projection");
 		//tester.mimicToExpert(sampleSizes, 10, outputPath);
-		tester.visualizeEpisode(outputPath+"/traj/");
+		//tester.visualizeEpisode(outputPath+"/traj/");
 	}
 }

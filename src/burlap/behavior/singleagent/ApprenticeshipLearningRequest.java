@@ -22,11 +22,11 @@ public class ApprenticeshipLearningRequest {
 	private boolean useMaxMargin;
 	
 	
-	private static final double DEFAULT_GAMMA = 0.99;
-	private static final double DEFAULT_EPSILON = 0.01;
-	private static final int DEFAULT_MAXITERATIONS = (int)(Math.log(DEFAULT_EPSILON * (1-DEFAULT_GAMMA)) / Math.log(DEFAULT_GAMMA));
-	private static final int DEFAULT_POLICYCOUNT = 5;
-	private static final boolean DEFAULT_USEMAXMARGIN = false;
+	public static final double DEFAULT_GAMMA = 0.99;
+	public static final double DEFAULT_EPSILON = 0.01;
+	public static final int DEFAULT_MAXITERATIONS = 100;
+	public static final int DEFAULT_POLICYCOUNT = 5;
+	public static final boolean DEFAULT_USEMAXMARGIN = false;
 
 	public ApprenticeshipLearningRequest() {
 		this.initDefaults();

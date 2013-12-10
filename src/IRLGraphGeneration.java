@@ -97,17 +97,16 @@ public class IRLGraphGeneration {
 	public double[] runALviaIRLRandomlyGeneratedEpisodesWithTHistory(String outputPath, int method, int episodesCount, int episodeNumber){
 		//for consistency make sure the path ends with a '/'
 		if(!outputPath.endsWith("/")){
-			outputPath = outputPath + "/";
+		outputPath = outputPath + "/";
 		}
 		
-		PropositionalFunction[] featureFunctions = 
-				MacroGridWorld.getPropositionalFunctions(domain, this.gridWorld);
-		
-		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, 4);
+		PropositionalFunction[] featureFunctions = MacroGridWorld.getPropositionalFunctions(this.domain);
+		Map<String, Double> rewards = MacroGridWorld.generateRandomRewards(featureFunctions, MacroGridWorld.MCELL_FILLED);
 		RewardFunction randomReward = new ApprenticeshipLearning.FeatureBasedRewardFunction(featureFunctions, rewards);
+
 		
 		//create and instance of planner; discount is set to 0.99; the minimum delta threshold is set to 0.001
-		ValueIteration planner = new ValueIteration(domain, randomReward, terminalFunction, 0.9, hashingFactory, .01, 100);		
+		ValueIteration planner = new ValueIteration(domain, randomReward, terminalFunction, ApprenticeshipLearningRequest.DEFAULT_GAMMA, hashingFactory, .01, 100);		
 		
 		//run planner from our initial state
 		planner.planFromState(initialState);
@@ -115,27 +114,20 @@ public class IRLGraphGeneration {
 		//create a Q-greedy policy using the Q-values that the planner computes
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
 		
+		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
+		
 		//run a sample of the computed policy and write its results to the file "VIResult.episode" in the directory outputPath
 		//a '.episode' extension is automatically added by the writeToFileMethod
 		List<EpisodeAnalysis> episodes = new ArrayList<EpisodeAnalysis>();
-		for (int i =0; i < episodesCount; ++i) {
-			EpisodeAnalysis episode = p.evaluateBehavior(initialState, randomReward, terminalFunction, 100);
+		for (int i =0; i < 10; ++i) {
+			EpisodeAnalysis episode = p.evaluateBehavior(startStateGenerator.generateState(), randomReward, terminalFunction ,100);
 			episodes.add(episode);
 		}
 		
-		//run a sample of the computed policy and write its results to the file "VIResult.episode" in the directory outputPath
-				//a '.episode' extension is automatically added by the writeToFileMethod
-		int index = 0;
-		for (EpisodeAnalysis episode : episodes) {
-			episode.writeToFile(outputPath + "expert" + index++, stateParser);
-		}
-		
-		long start = System.currentTimeMillis();
-		
-		
-		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
 		ApprenticeshipLearningRequest request = 
 				new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, episodes, startStateGenerator);
+		request.setPolicyCount(episodeNumber);
+		request.setUsingMaxMargin(method == 0);
 		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 		long end = System.currentTimeMillis();
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, terminalFunction, 100);
@@ -153,14 +145,15 @@ public class IRLGraphGeneration {
 			episode.writeToFile(outputPath + "expert" + index++, stateParser);
 		}
 		
-		long start = System.currentTimeMillis();
 		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
 		ApprenticeshipLearningRequest request = 
 				new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, expertEpisodes, startStateGenerator);
 		request.setUsingMaxMargin(true);
+		
+		long start = System.currentTimeMillis();
 		Policy policy = ApprenticeshipLearning.getLearnedPolicy(request);
 		long end = System.currentTimeMillis();
-		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(initialState, randomReward, terminalFunction, 100);
+		EpisodeAnalysis resultEpisode = policy.evaluateBehavior(startStateGenerator.generateState(), randomReward, terminalFunction, 100);
 		resultEpisode.writeToFile(outputPath + "Result", stateParser);
 		
 		return end - start;
@@ -174,11 +167,11 @@ public class IRLGraphGeneration {
 		for (EpisodeAnalysis episode : expertEpisodes) {
 			episode.writeToFile(outputPath + "expert" + index++, stateParser);
 		}
-		
-		long start = System.currentTimeMillis();
 		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
 		ApprenticeshipLearningRequest request = 
 				new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, expertEpisodes, startStateGenerator);
+		
+		long start = System.currentTimeMillis();
 		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 		long end = System.currentTimeMillis();
 		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, terminalFunction, 100);
@@ -194,7 +187,7 @@ public class IRLGraphGeneration {
 		try {	
 			writer = new FileWriter("results.txt");
 			for (int i = 0; i < repetitions; ++i) {
-				for (int j = 0; j < 4; j++) {
+				for (int j = 1; j < 4; j++) {
 					int macroCellWidth = (int)Math.pow(2, j);
 					for (int k = 0; k < 4; k++) {
 						int macroCellHeight = (int)Math.pow(2, k);
@@ -222,7 +215,7 @@ public class IRLGraphGeneration {
 		try {	
 			writer = new FileWriter("tVSRuns.txt");
 			for (int i = 0; i < repetitions; ++i) {
-				for (int j = 0; j < 5; j++) {
+				for (int j = 1; j < 5; j++) {
 					String trialOutputPath = outputPath + "/trial" + count++;
 					double[] tHistory = tester.runALviaIRLRandomlyGeneratedEpisodesWithTHistory(trialOutputPath,1, 5, j);
 					for (int k = 0; k < tHistory.length; ++k) {
@@ -245,8 +238,8 @@ public class IRLGraphGeneration {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//IRLGraphGeneration.generateRuntimeVSFeatures("output", 64, 4, 5);
-		IRLGraphGeneration.generateTVSRuntimeForEpisodesIterations("output", 64, 4, 5);
+		//IRLGraphGeneration.generateRuntimeVSFeatures("output", 64, 4, 1);
+		IRLGraphGeneration.generateTVSRuntimeForEpisodesIterations("output", 64, 4, 1);
 	}
 	
 	static class IRLGridTF implements TerminalFunction{	
