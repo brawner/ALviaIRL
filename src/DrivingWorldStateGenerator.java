@@ -13,6 +13,7 @@ public class DrivingWorldStateGenerator implements StateGenerator {
 	private int[] blockXLocations;
 	private int blockCount;
 	private int height;
+
 	public DrivingWorldStateGenerator(Domain domain, int[] blockXLocations, int height, int blockCount) {
 		this.domain = domain;
 		this.blockXLocations = blockXLocations;
@@ -22,14 +23,14 @@ public class DrivingWorldStateGenerator implements StateGenerator {
 
 	@Override
 	public State generateState() {
-
+		Random random = new Random();
 		State s = new State();
 		ObjectInstance agent = new ObjectInstance(this.domain.getObjectClass(DrivingGridWorld.agentClass), DrivingGridWorld.agentClass+0);
-		agent.setValue(DrivingGridWorld.ATTX, this.blockXLocations[0]);
-		agent.setValue(DrivingGridWorld.ATTY, 0);
+		agent.setValue(DrivingGridWorld.ATTX, 0);
+		agent.setValue(DrivingGridWorld.ATTY, height / 2);
 		s.addObject(agent);
 		Set<double[]> blockLocations = new HashSet<double[]>();
-		Random random = new Random();
+		
 		
 		while (blockLocations.size() < blockCount) {
 			int x = this.blockXLocations[random.nextInt(this.blockXLocations.length)];

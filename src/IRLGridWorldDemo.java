@@ -204,10 +204,16 @@ public class IRLGridWorldDemo {
 		StateGenerator startStateGenerator = new RandomStartStateGenerator((SADomain)this.domain, this.initialState);
 		ApprenticeshipLearningRequest request = 
 				new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, expertEpisodes, startStateGenerator);
+		//request.setUsingMaxMargin(true);
+		request.setPolicyCount(60);
+		request.setMaxIterations(40);
 		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 		//Policy projectionPolicy = ApprenticeshipLearning.projectionMethod(this.domain, planner, featureFunctions, expertEpisodes, 0.99, 0.01, 100);
-		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, tf, 100);
-		projectionEpisode.writeToFile(outputPath + "Projection", sp);
+		
+		for (int i = 0; i < 10; i++) {
+			EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(startStateGenerator.generateState(), randomReward, tf, 100);
+			projectionEpisode.writeToFile(outputPath + "Projection" + i, sp);
+		}
 		end = System.currentTimeMillis();
 		System.out.println("Time to complete projection: " + (end - start)/1000F);
 	}
@@ -218,11 +224,11 @@ public class IRLGridWorldDemo {
 	 */
 	public static void main(String[] args) {
 		IRLGridWorldDemo tester = new IRLGridWorldDemo();
-		String outputPath = "output"; //directory to record results
+		String outputPath = "output_macro"; //directory to record results
 		
 		
-		//tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
-		tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
+		tester.runALviaIRLRandomlyGeneratedEpisodes(outputPath);
+		//tester.runALviaIRLWithEpisodes(outputPath, tester.interactive()); //performs planning and save a policy sample in outputPath
 		
 		/*
 		Policy policy = new ExpertPolicy(20, 20, tester.domain.getAction(GridWorldDomain.ACTIONNORTH),

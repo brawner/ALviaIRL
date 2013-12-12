@@ -199,13 +199,13 @@ public class DrivingGridWorld extends GridWorldDomain{
 	
 	public static PropositionalFunction[] getFeatureFunctions(Domain domain, DrivingGridWorld driveGW) {		
 		//features: near or on a block; on the grass; in a lane
-		PropositionalFunction[] pfs = new PropositionalFunction[2 + driveGW.laneCount];
+		PropositionalFunction[] pfs = new PropositionalFunction[3 + driveGW.laneCount];
 		
 		pfs[0] = new NearBlockPF(domain);
-		pfs[1] = new OnGrassPF(domain, driveGW.getMap());
-		
+		pfs[1] = new OnGrassPF(domain, driveGW.getMap(), false);
+		pfs[2] = new OnGrassPF(domain, driveGW.getMap(), true);
 		for (int laneNum = 0; laneNum < driveGW.laneCount; laneNum++) {
-			pfs[laneNum+2] = new InLanePF(domain, laneNum, driveGW.leftGrassRight, driveGW.laneWidth);
+			pfs[laneNum+3] = new InLanePF(domain, laneNum, driveGW.leftGrassRight, driveGW.laneWidth);
 		}
 				
 		return pfs;
@@ -235,7 +235,7 @@ public class DrivingGridWorld extends GridWorldDomain{
 				int blocky = block.getDiscValForAttribute(ATTY);
 				
 				//if touching or on
-				if ((agentx-blockx)*(agentx-blockx) + (agenty-blocky)*(agenty-blocky) <= 2) {
+				if (agentx==blockx && agenty == blocky) {
 					return true;
 				}
 			}
@@ -252,10 +252,12 @@ public class DrivingGridWorld extends GridWorldDomain{
 	 */
 	public static class OnGrassPF extends PropositionalFunction {
 		int[][] map;
+		boolean leftSide;
 
-		public OnGrassPF(Domain domain, int[][] map) {
-			super("OnGrassPF", domain, "");
+		public OnGrassPF(Domain domain, int[][] map, boolean leftSide) {
+			super("OnGrassPF" + ((leftSide) ? "Left" : "Right"), domain, "");
 			this.map = map;
+			this.leftSide = leftSide;
 		}
 
 		@Override
@@ -263,7 +265,7 @@ public class DrivingGridWorld extends GridWorldDomain{
 			ObjectInstance agent = s.getFirstObjectOfClass(agentClass);
 			int x = agent.getDiscValForAttribute(ATTX);
 			int y = agent.getDiscValForAttribute(ATTY);
-			return this.map[x][y] == DrivingWorldVisualizer.grass;
+			return this.map[x][y] == DrivingWorldVisualizer.grass && (x <= this.map.length/2) == this.leftSide;
 		}
 		
 	}

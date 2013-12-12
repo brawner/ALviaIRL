@@ -13,12 +13,11 @@ import burlap.oomdp.singleagent.SADomain;
 
 public class RandomStartStateGenerator implements StateGenerator {
 	private List<State> reachableStates;
-	Random random;
+	private Random 		random;
 	
-	public RandomStartStateGenerator(SADomain domain, State initialState) {
-		StateReachability stateReachability = new StateReachability();
+	public RandomStartStateGenerator(SADomain domain, State seedState) {
 		StateHashFactory hashFactory = new NameDependentStateHashFactory();
-		this.reachableStates = StateReachability.getReachableStates(initialState, domain, hashFactory);
+		this.reachableStates = StateReachability.getReachableStates(seedState, domain, hashFactory);
 		this.random = new Random();
 	}
 
@@ -26,5 +25,4 @@ public class RandomStartStateGenerator implements StateGenerator {
 	public State generateState() {
 		return this.reachableStates.get(this.random.nextInt(this.reachableStates.size()));
 	}
-
 }

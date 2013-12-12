@@ -128,10 +128,7 @@ public class IRLGraphGeneration {
 				new ApprenticeshipLearningRequest(this.domain, planner, featureFunctions, episodes, startStateGenerator);
 		request.setPolicyCount(episodeNumber);
 		request.setUsingMaxMargin(method == 0);
-		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
-		long end = System.currentTimeMillis();
-		EpisodeAnalysis projectionEpisode = projectionPolicy.evaluateBehavior(initialState, randomReward, terminalFunction, 100);
-		projectionEpisode.writeToFile(outputPath + "Projection", stateParser);
+		ApprenticeshipLearning.getLearnedPolicy(request);
 		
 		return request.getTHistory();
 		
@@ -180,18 +177,18 @@ public class IRLGraphGeneration {
 		return end - start;
 	}	
 	
-	public static void generateRuntimeVSFeatures(String outputPath, int maxFeatureCount, int dataPointCount, int repetitions) {
-		int xSeparation = maxFeatureCount / dataPointCount;
+	public static void generateRuntimeVSFeatures(String outputPath, int repetitions) {
 		int count = 0;
 		FileWriter writer;
+
 		try {	
 			writer = new FileWriter("results.txt");
 			for (int i = 0; i < repetitions; ++i) {
-				for (int j = 1; j < 4; j++) {
+				for (int j = 1; j < 5; j++) {
 					int macroCellWidth = (int)Math.pow(2, j);
-					for (int k = 0; k < 4; k++) {
+					for (int k = 0; k < 5; k++) {
 						int macroCellHeight = (int)Math.pow(2, k);
-						IRLGraphGeneration tester = new IRLGraphGeneration(new MacroGridWorld(8, 8, macroCellWidth, macroCellHeight));
+						IRLGraphGeneration tester = new IRLGraphGeneration(new MacroGridWorld(16, 16, macroCellWidth, macroCellHeight));
 						String trialOutputPath = outputPath + "/trial" + count++;
 						writer.append(macroCellWidth + ", " + macroCellHeight + ", " + tester.runALviaIRLRandomlyGeneratedEpisodes(trialOutputPath,0, 1) + ", 0\n");
 						writer.append(macroCellWidth + ", " + macroCellHeight + ", " + tester.runALviaIRLRandomlyGeneratedEpisodes(trialOutputPath,1, 1) + ", 1\n");
@@ -207,15 +204,14 @@ public class IRLGraphGeneration {
 		}
 	}
 	
-	public static void generateTVSRuntimeForEpisodesIterations(String outputPath, int maxFeatureCount, int dataPointCount, int repetitions) {
-		int xSeparation = maxFeatureCount / dataPointCount;
+	public static void generateTVSRuntimeForEpisodesIterations(String outputPath, int maxPolicyCount, int repetitions) {
 		int count = 0;
-		IRLGraphGeneration tester = new IRLGraphGeneration(new MacroGridWorld(8, 8, 4, 4));
+		IRLGraphGeneration tester = new IRLGraphGeneration(new MacroGridWorld(16, 16, 8, 8));
 		FileWriter writer;
 		try {	
 			writer = new FileWriter("tVSRuns.txt");
 			for (int i = 0; i < repetitions; ++i) {
-				for (int j = 1; j < 5; j++) {
+				for (int j = 1; j < maxPolicyCount; j++) {
 					String trialOutputPath = outputPath + "/trial" + count++;
 					double[] tHistory = tester.runALviaIRLRandomlyGeneratedEpisodesWithTHistory(trialOutputPath,1, 5, j);
 					for (int k = 0; k < tHistory.length; ++k) {
@@ -238,8 +234,8 @@ public class IRLGraphGeneration {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//IRLGraphGeneration.generateRuntimeVSFeatures("output", 64, 4, 1);
-		IRLGraphGeneration.generateTVSRuntimeForEpisodesIterations("output", 64, 4, 1);
+		//IRLGraphGeneration.generateRuntimeVSFeatures("output", 10);
+		IRLGraphGeneration.generateTVSRuntimeForEpisodesIterations("output", 15, 10);
 	}
 	
 	static class IRLGridTF implements TerminalFunction{	

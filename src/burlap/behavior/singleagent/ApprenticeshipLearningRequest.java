@@ -9,24 +9,24 @@ import burlap.oomdp.core.Domain;
 import burlap.oomdp.core.PropositionalFunction;
 
 public class ApprenticeshipLearningRequest {
-	private Domain domain;
-	private OOMDPPlanner planner;
-	private PropositionalFunction[] featureFunctions;
-	private List<EpisodeAnalysis> expertEpisodes;
-	private StateGenerator startStateGenerator;
-	private double gamma;
-	private double epsilon;
-	private int maxIterations;
-	private int policyCount;
-	private double[] tHistory;
-	private boolean useMaxMargin;
+	private Domain 						domain;
+	private OOMDPPlanner 				planner;
+	private PropositionalFunction[] 	featureFunctions;
+	private List<EpisodeAnalysis> 		expertEpisodes;
+	private StateGenerator 				startStateGenerator;
+	private double 						gamma;
+	private double 						epsilon;
+	private int 						maxIterations;
+	private int 						policyCount;
+	private double[] 					tHistory;
+	private boolean 					useMaxMargin;
 	
 	
-	public static final double DEFAULT_GAMMA = 0.99;
-	public static final double DEFAULT_EPSILON = 0.01;
-	public static final int DEFAULT_MAXITERATIONS = 100;
-	public static final int DEFAULT_POLICYCOUNT = 5;
-	public static final boolean DEFAULT_USEMAXMARGIN = false;
+	public static final double 			DEFAULT_GAMMA = 0.99;
+	public static final double 			DEFAULT_EPSILON = 0.01;
+	public static final int 			DEFAULT_MAXITERATIONS = 100;
+	public static final int 			DEFAULT_POLICYCOUNT = 5;
+	public static final boolean 		DEFAULT_USEMAXMARGIN = false;
 
 	public ApprenticeshipLearningRequest() {
 		this.initDefaults();

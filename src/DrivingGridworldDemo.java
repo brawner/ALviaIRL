@@ -82,8 +82,10 @@ public class DrivingGridworldDemo {
 		
 		ApprenticeshipLearningRequest request =
 				new ApprenticeshipLearningRequest(gridWorldDomain, planner, featureFunctions, expertEpisodes, stateGenerator);
+		request.setMaxIterations(20);
 		Policy projectionPolicy = ApprenticeshipLearning.getLearnedPolicy(request);
 		
+		for (int i = 0; i < 10; i++) {
 		State testState = stateGenerator.generateState();
 		
 		//run planner from our initial state
@@ -93,14 +95,33 @@ public class DrivingGridworldDemo {
 		Policy p = new GreedyQPolicy((QComputablePlanner)planner);
 		
 		EpisodeAnalysis projectionEpisode = p.evaluateBehavior(testState, new UniformCostRF(), terminalFunction, 100);
-		projectionEpisode.writeToFile(outputPath + "Projection", stateParser);
+		projectionEpisode.writeToFile(outputPath + "Projection" + i, stateParser);
+		}
 		Visualizer v = DrivingWorldVisualizer.getVisualizer(gridWorldDomain, gridWorld.getMap());
 		StateParser sp = new DrivingWorldStateParser(gridWorldDomain);
 		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, gridWorldDomain, sp, outputPath);
 	}
+	
+	public static void runDrivingVisualizer(String outputPath, int width, int height, int numLanes, int laneWidth ) {
+		DrivingGridWorld gridWorld = new DrivingGridWorld(width, height, numLanes, laneWidth);
+		Domain gridWorldDomain = gridWorld.generateDomain();
 		
+		int[] xLocations = new int[numLanes];
+		int startX = (width - numLanes * laneWidth) / 2 + laneWidth / 2;
+		for (int i =0; i < numLanes; ++i) {
+			xLocations[i] = startX + i * laneWidth;
+		}
+		
+		StateGenerator stateGenerator = new DrivingWorldStateGenerator(gridWorldDomain, xLocations, height, height);
+
+		StateParser stateParser = new DrivingWorldStateParser(gridWorldDomain);
+		Visualizer v = DrivingWorldVisualizer.getVisualizer(gridWorldDomain, gridWorld.getMap());
+		StateParser sp = new DrivingWorldStateParser(gridWorldDomain);
+		EpisodeSequenceVisualizer evis = new EpisodeSequenceVisualizer(v, gridWorldDomain, sp, outputPath);
+	}
+	
 	public static void main(String[] args) {
-		String outputPath = "output";
+		String outputPath = "output_driving";
 		int width = 11;
 		int height = 10;
 		int numLanes = 3;
@@ -153,5 +174,6 @@ public class DrivingGridworldDemo {
 		}
 		
 		DrivingGridworldDemo.runDrivingDemo(outputPath, width, height, numLanes, laneWidth);
+		//DrivingGridworldDemo.runDrivingVisualizer("output_final/", width, height, numLanes, laneWidth);
 	}
 }

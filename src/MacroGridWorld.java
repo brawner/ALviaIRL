@@ -28,11 +28,11 @@ public class MacroGridWorld extends GridWorldDomain{
 	public static final String							ATTSTEPS = "agentstepsattribute";
 	public static final int								MIN_REWARD = 10;
 	public static final int								MAX_REWARD = 10;
-	public static final int								HEIGHT = 20;
-	public static final int								WIDTH = 20;
+	public static final int								HEIGHT = 32;
+	public static final int								WIDTH = 32;
 	
-	public static final int								MCELL_HEIGHT = 10;
-	public static final int								MCELL_WIDTH = 10;
+	public static final int								MCELL_HEIGHT = 16;
+	public static final int								MCELL_WIDTH = 16;
 	public static final int								MCELL_COUNT = MCELL_HEIGHT*MCELL_WIDTH;
 	public static final int								MCELL_FILLED = 5;
 	
